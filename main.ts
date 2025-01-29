@@ -8,10 +8,12 @@ import {
 	FileSystemAdapter,
 	Editor,
 	MarkdownView,
+	MarkdownPostProcessorContext
 } from "obsidian";
+
 import { DBService } from "./src/dbService";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
-import { pickTableName } from "./src/helpers";
+import { pickTableName, processSqlBlock } from "./src/helpers";
 import { SqliteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 
 export default class SqliteDBPlugin extends Plugin {
@@ -24,14 +26,7 @@ export default class SqliteDBPlugin extends Plugin {
 
 		this.dbService = new DBService();
 
-		//! i dont think we need this since we do it in each command
-		// this.addCommand({
-		// 	id: "open-db",
-		// 	name: "Open Local SQLite DB",
-		// 	callback: async () => {
-		// 		await this.openDatabase();
-		// 	},
-		// });
+		await this.openDatabase();
 
 		this.addCommand({
 			id: "inspect-table-structure",
@@ -45,7 +40,7 @@ export default class SqliteDBPlugin extends Plugin {
 		
 		this.addCommand({
 			id: "dump-table-to-notes",
-			name: "Dump Table Rows to Notes",
+			name: "Dump Table to Notes",
 			callback: async () => {
 				await this.openDatabase(); // ensure DB is loaded
 			
@@ -59,7 +54,13 @@ export default class SqliteDBPlugin extends Plugin {
 				await convertEntriesInNotes(this.dbService, chosenTable, this.app);
 			},
 		});
-		
+
+		this.registerMarkdownCodeBlockProcessor(
+			"sql", // <-- the name of your code block (```sql)
+			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+				await processSqlBlock(this.dbService, source, el);
+			}
+		);
 
 		this.addSettingTab(new SqliteDBSettingTab(this.app, this));
 	}

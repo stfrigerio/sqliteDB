@@ -1,3 +1,4 @@
 import { pickTableName } from "./pickTableName";
+import { processSqlBlock } from "./processSqlBlock";
 
-export { pickTableName };
+export { pickTableName, processSqlBlock };
