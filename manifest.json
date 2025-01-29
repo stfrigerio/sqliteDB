@@ -1,9 +1,9 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "sqliteDB",
+	"name": "sqliteDB",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
+	"description": "A plugin that allows to interact with sqlite databases in Obsidian",
 	"author": "Obsidian",
 	"authorUrl": "https://obsidian.md",
 	"fundingUrl": "https://obsidian.md/pricing",

@@ -1,85 +1,103 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { 
+	App, 
+	Plugin, 
+	PluginSettingTab, 
+	Setting, 
+	Modal, 
+	Notice,
+	FileSystemAdapter   // <-- Import FileSystemAdapter
+} from "obsidian";
 
-// Remember to rename these classes and interfaces!
+import initSqlJs, { Database } from "sql.js";
+import { readFileSync, writeFileSync } from "fs";
 
-interface MyPluginSettings {
-	mySetting: string;
+interface MyWasmDBSettings {
+	dbFilePath: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
+const DEFAULT_SETTINGS: MyWasmDBSettings = {
+	dbFilePath: "",
+};
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class MyWasmDBPlugin extends Plugin {
+	settings: MyWasmDBSettings;
+	private db: Database | null = null;
 
 	async onload() {
+		console.log("Loading MyWasmDBPlugin...");
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
+			id: "open-wasm-db",
+			name: "Open SQLite (WASM) DB and read a table",
+			callback: async () => {
+				await this.readDatabase();
+			},
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		this.addSettingTab(new MyWasmDBSettingTab(this.app, this));
 	}
 
 	onunload() {
+		console.log("Unloading MyWasmDBPlugin...");
+		this.db = null;
+	}
 
+	private async readDatabase() {
+		const { dbFilePath } = this.settings;
+		if (!dbFilePath) {
+			new Notice("No DB path set in plugin settings.");
+			return;
+		}
+
+		try {
+			// 1) Get the actual base path of the local vault, if we have a FileSystemAdapter
+			let basePath: string | null = null;
+			const adapter = this.app.vault.adapter;
+			if (adapter instanceof FileSystemAdapter) {
+				basePath = adapter.getBasePath(); // Now we can call getBasePath()
+			}
+
+			if (!basePath) {
+				new Notice("This plugin only works with a local vault (FileSystemAdapter).");
+				return;
+			}
+
+			// 2) Load the sql.js WASM module, telling it exactly where to find sql-wasm.wasm
+			//    Suppose we've placed sql-wasm.wasm in the same folder as main.js, i.e.
+			//    <Vault>/.obsidian/plugins/sqliteDB/sql-wasm.wasm
+			const SQL = await initSqlJs({
+				locateFile: (file) => {
+					// "file" will typically be "sql-wasm.wasm"
+					return `${basePath}/.obsidian/plugins/sqliteDB/${file}`;
+				},
+			});
+
+			// 3) Read file from disk
+			const fileBuffer = readFileSync(dbFilePath);
+			const uint8Array = new Uint8Array(fileBuffer);
+
+			// 4) Create the in-memory DB
+			this.db = new SQL.Database(uint8Array);
+
+			// 5) Run a sample query
+			const result = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' LIMIT 1;");
+
+			if (result?.[0]?.values?.[0]?.[0]) {
+				new Notice(`Found table: ${result[0].values[0][0]}`);
+			} else {
+				new Notice("Connected, but found no tables.");
+			}
+
+			/* If you want to write changes back:
+				this.db.run("CREATE TABLE test (col1 int);");
+				const data = this.db.export(); // Uint8Array
+				writeFileSync(dbFilePath, Buffer.from(data));
+			*/
+		} catch (err) {
+			console.error(err);
+			new Notice("Error reading DB: " + (err as Error).message);
+		}
 	}
 
 	async loadSettings() {
@@ -91,44 +109,31 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+class MyWasmDBSettingTab extends PluginSettingTab {
+	plugin: MyWasmDBPlugin;
 
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: MyWasmDBPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
-		const {containerEl} = this;
-
+		const { containerEl } = this;
 		containerEl.empty();
 
+		containerEl.createEl("h2", { text: "WASM DB Plugin Settings" });
+
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName("Database File Path")
+			.setDesc("Absolute path to the .db file on disk.")
+			.addText((text) =>
+				text
+					.setPlaceholder("C:\\path\\to\\your.db")
+					.setValue(this.plugin.settings.dbFilePath)
+					.onChange(async (value) => {
+						this.plugin.settings.dbFilePath = value;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }
