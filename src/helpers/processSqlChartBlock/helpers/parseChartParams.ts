@@ -1,6 +1,7 @@
 export interface BaseChartConfig {
     table: string;
     chartType: 'line' | 'bar' | 'pie';
+    dateColumn: string;
     startDate?: string;
     endDate?: string;
     chartOptions?: any;
@@ -88,6 +89,7 @@ export function parseChartParams(source: string): ChartConfig | null {
             }
             return {
                 ...baseConfig,
+                dateColumn: params.dateColumn,
                 chartType: 'pie',
                 categoryColumn: params.categoryColumn,
                 valueColumn: params.valueColumn
@@ -100,6 +102,7 @@ export function parseChartParams(source: string): ChartConfig | null {
             }
             return {
                 ...baseConfig,
+                dateColumn: params.dateColumn,
                 chartType: params.chartType,
                 xColumn: params.xColumn,
                 yColumns: Array.isArray(params.yColumns) ? params.yColumns : [params.yColumns],

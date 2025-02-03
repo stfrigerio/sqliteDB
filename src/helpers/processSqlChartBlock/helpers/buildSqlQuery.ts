@@ -13,7 +13,7 @@ export function buildSqlQuery(config: ChartConfig) {
             `;
             
             if (config.startDate && config.endDate) {
-                query += ` WHERE date BETWEEN ? AND ?`;
+                query += ` WHERE ${config.dateColumn} BETWEEN ? AND ?`;
                 params.push(config.startDate, config.endDate);
             }
             
@@ -41,7 +41,7 @@ export function buildSqlQuery(config: ChartConfig) {
             }
 
             if (config.startDate && config.endDate) {
-                query += ` WHERE ${config.xColumn} BETWEEN ? AND ?`;
+                query += ` WHERE ${config.dateColumn} BETWEEN ? AND ?`;
                 params.push(config.startDate, config.endDate);
             }
 

@@ -8,10 +8,16 @@ export async function validateColumns(db: any, config: ChartConfig) {
     
     if (config.chartType === 'pie') {
         requestedColumns = [config.categoryColumn, config.valueColumn];
+        if (config.dateColumn && (config.startDate || config.endDate)) {
+            requestedColumns.push(config.dateColumn);
+        }
     } else {
         requestedColumns = [config.xColumn, ...config.yColumns];
         if (config.categoryColumn) {
             requestedColumns.push(config.categoryColumn);
+        }
+        if (config.dateColumn && (config.startDate || config.endDate)) {
+            requestedColumns.push(config.dateColumn);
         }
     }
     

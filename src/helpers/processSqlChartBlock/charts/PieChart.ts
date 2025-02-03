@@ -34,35 +34,47 @@ export function createPieChart(labels: string[], datasets: any[], options: PieCh
                     getColorForIndex(index, 0.8)
                 ),
                 borderWidth: 2,
-                borderColor: 'white',
+                borderColor: labels.map((_, index) => getColorForIndex(index, 1)),
                 hoverBorderWidth: 3,
-                hoverBorderColor: 'white',
+                hoverBorderColor: labels.map((_, index) => getColorForIndex(index, 1)),
             }))
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
+            aspectRatio: 2,  // This makes the chart more compact
             rotation: chartOptions.rotation,
             cutout: chartOptions.isDoughnut ? `${chartOptions.cutout}%` : 0,
             animations: chartOptions.animations ? {
                 animateRotate: true,
                 animateScale: true
             } : false,
+            layout: {
+                padding: {
+                    top: 10,
+                    bottom: 10,
+                    left: 10,
+                    right: chartOptions.showLegend ? 30 : 10  // More padding when legend is shown
+                }
+            },
             plugins: {
                 legend: {
                     display: chartOptions.showLegend,
                     position: 'right' as const,
+                    align: 'center' as const,
                     labels: {
-                        padding: 15,
+                        padding: 20,
+                        boxWidth: 15,
+                        boxHeight: 15,
                         font: {
-                            size: 12
+                            size: 11
                         },
                         generateLabels: (chart: any) => {
                             const data = chart.data;
                             return data.labels.map((label: string, index: number) => ({
                                 text: `${label}: ${data.datasets[0].data[index]}`,
                                 fillStyle: data.datasets[0].backgroundColor[index],
-                                strokeStyle: data.datasets[0].borderColor,
+                                strokeStyle: data.datasets[0].borderColor[index],
                                 lineWidth: 1,
                                 hidden: isNaN(data.datasets[0].data[index]),
                                 index
@@ -74,12 +86,12 @@ export function createPieChart(labels: string[], datasets: any[], options: PieCh
                     enabled: chartOptions.tooltips,
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleFont: {
-                        size: 13
-                    },
-                    bodyFont: {
                         size: 12
                     },
-                    padding: 10,
+                    bodyFont: {
+                        size: 11
+                    },
+                    padding: 8,
                     cornerRadius: 4,
                     callbacks: {
                         label: function(context: any) {
