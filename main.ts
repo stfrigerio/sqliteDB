@@ -13,7 +13,7 @@ import {
 
 import { DBService } from "./src/dbService";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
-import { pickTableName, processSqlBlock } from "./src/helpers";
+import { pickTableName, processSqlBlock, processSqlChartBlock } from "./src/helpers";
 import { SqliteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 
 export default class SqliteDBPlugin extends Plugin {
@@ -59,6 +59,13 @@ export default class SqliteDBPlugin extends Plugin {
 			"sql", // <-- the name of your code block (```sql)
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
 				await processSqlBlock(this.dbService, source, el);
+			}
+		);
+
+		this.registerMarkdownCodeBlockProcessor(
+			"sql-chart",
+			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+				await processSqlChartBlock(this.dbService, source, el);
 			}
 		);
 
