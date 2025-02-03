@@ -23,7 +23,7 @@ export async function processSqlBlock(dbService: DBService, source: string, el: 
         return;
     }
 
-    // 1) Parse code block params
+    // Parse code block params
     const params = parseSqlParams(source);
     const { table, keyColumn, value, columns } = params;
 
@@ -32,45 +32,76 @@ export async function processSqlBlock(dbService: DBService, source: string, el: 
         return;
     }
 
-    // 2) Build query based on columns
-    // If columns was provided, we split on commas, else use "*".
-    let selectCols = "*";
-    if (columns) {
-        // e.g. "col1, col2" => "col1, col2"
-        const colList = columns.split(",").map((c) => c.trim()).join(", ");
-        selectCols = colList;
-    }
+    // Verify table exists
+    try {
+        const tableCheck = db.exec(`SELECT name FROM sqlite_master WHERE type='table' AND name=?;`, [table]);
+        if (!tableCheck || tableCheck.length === 0 || tableCheck[0].values.length === 0) {
+            el.createEl("p", { text: `Table "${table}" does not exist in the database.` });
+            return;
+        }
 
-    const query = `SELECT ${selectCols} FROM "${table}" WHERE "${keyColumn}" = ?;`;
-    const result = db.exec(query, [value]);
+        // Get available columns for the table
+        const tableInfo = db.exec(`PRAGMA table_info("${table}");`);
+        const availableColumns = tableInfo[0].values.map((row: any[]) => row[1]);
 
-    if (!result || result.length === 0 || result[0].values.length === 0) {
-        el.createEl("p", {
-            text: `No rows found in ${table} where ${keyColumn} = ${value}`,
+        // Verify keyColumn exists
+        if (!availableColumns.includes(keyColumn)) {
+            el.createEl("p", { text: `Column "${keyColumn}" does not exist in table "${table}". Available columns are: ${availableColumns.join(", ")}` });
+            return;
+        }
+
+        // Build query based on columns
+        // If columns was provided, we split on commas, else use "*".
+        let selectCols = "*";
+        if (columns) {
+            const requestedColumns = columns.split(",").map(c => c.trim());
+            const invalidColumns = requestedColumns.filter(col => !availableColumns.includes(col));
+            
+            if (invalidColumns.length > 0) {
+                el.createEl("p", { text: `The following columns do not exist in table "${table}": ${invalidColumns.join(", ")}` });
+                el.createEl("p", { text: `Available columns are: ${availableColumns.join(", ")}` });
+                return;
+            }
+            selectCols = requestedColumns.join(", ");
+        }
+
+        const query = `SELECT ${selectCols} FROM "${table}" WHERE "${keyColumn}" = ?;`;
+        const result = db.exec(query, [value]);
+
+        if (!result || result.length === 0 || result[0].values.length === 0) {
+            el.createEl("p", {
+                text: `No rows found in table "${table}" where ${keyColumn} = ${value}`,
+            });
+            el.createEl("p", {
+                text: "Try checking the value or using a different key column.",
+            });
+            return;
+        }
+
+        // result[0] => { columns: string[], values: any[][] }
+        const rowObj = result[0];
+        const columnsReturned = rowObj.columns; 
+        const rows = rowObj.values;           
+
+        // For each row, create a separate table
+        rows.forEach((rowValues, rowIndex) => {
+            // Optional heading
+            el.createEl("h4", { text: `Row #${rowIndex + 1}` });
+
+            // Build the table for this row
+            const tableEl = el.createEl("table");
+            columnsReturned.forEach((colName, colIndex) => {
+                const tr = tableEl.createEl("tr");
+                tr.createEl("th", { text: colName });
+                tr.createEl("td", { text: String(rowValues[colIndex] ?? "") });
+            });
+
+            el.createEl("hr");
         });
-        return;
+    } catch (error) {
+        el.createEl("p", { text: "An error occurred while processing the SQL block." });
+        el.createEl("p", { text: String(error) });
     }
-
-    // result[0] => { columns: string[], values: any[][] }
-    const rowObj = result[0];
-    const columnsReturned = rowObj.columns; 
-    const rows = rowObj.values;           
-
-    // 3) For each row, create a separate table
-    rows.forEach((rowValues, rowIndex) => {
-        // Optional heading
-        el.createEl("h4", { text: `Row #${rowIndex + 1}` });
-
-        // Build the table for this row
-        const tableEl = el.createEl("table");
-        columnsReturned.forEach((colName, colIndex) => {
-            const tr = tableEl.createEl("tr");
-            tr.createEl("th", { text: colName });
-            tr.createEl("td", { text: String(rowValues[colIndex] ?? "") });
-        });
-
-        el.createEl("hr");
-    });
 }
 
 /** 
