@@ -4,9 +4,15 @@ export async function validateColumns(db: any, config: ChartConfig) {
     const tableInfo = db.exec(`PRAGMA table_info("${config.table}");`);
     const availableColumns = tableInfo[0].values.map((row: any[]) => row[1]);
 
-    const requestedColumns = [config.xColumn, ...config.yColumns];
-    if (config.groupBy) {
-        requestedColumns.push(config.groupBy);
+    let requestedColumns = [];
+    
+    if (config.chartType === 'pie') {
+        requestedColumns = [config.categoryColumn, config.valueColumn];
+    } else {
+        requestedColumns = [config.xColumn, ...config.yColumns];
+        if (config.categoryColumn) {
+            requestedColumns.push(config.categoryColumn);
+        }
     }
     
     const invalidColumns = requestedColumns.filter(col => !availableColumns.includes(col));

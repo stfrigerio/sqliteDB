@@ -13,7 +13,11 @@ export async function processSqlChartBlock(dbService: DBService, source: string,
 
     const config = parseChartParams(source);
     if (!config) {
-        el.createEl("p", { text: "Required parameters are: table, xColumn, yColumns" });
+        // @ts-ignore
+        const message = config?.chartType === 'pie' 
+            ? "Required parameters for pie chart are: table, categoryColumn, valueColumn"
+            : "Required parameters are: table, xColumn, yColumns";
+        el.createEl("p", { text: message });
         return;
     }
 

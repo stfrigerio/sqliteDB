@@ -1,25 +1,27 @@
-export interface ChartOptions {
-    fill?: boolean;
-    tension?: number;
-    pointRadius?: number;
-    pointHoverRadius?: number;
-    showLegend?: boolean;
-    yAxisMin?: number;
-    yAxisMax?: number;
-    tooltips?: boolean;
-    animations?: boolean;
-}
-
-export interface ChartConfig {
+export interface BaseChartConfig {
     table: string;
-    xColumn: string;
-    yColumns: string[];
-    groupBy?: string;
+    chartType: 'line' | 'bar' | 'pie';
     startDate?: string;
     endDate?: string;
-    chartType: string;
-    chartOptions?: ChartOptions;
+    chartOptions?: any;
 }
+
+// For line and bar charts
+export interface TimeSeriesChartConfig extends BaseChartConfig {
+    chartType: 'line' | 'bar';
+    xColumn: string;
+    yColumns: string[];
+    categoryColumn?: string;
+}
+
+// For pie charts
+export interface PieChartConfig extends BaseChartConfig {
+    chartType: 'pie';
+    categoryColumn: string;
+    valueColumn: string;
+}
+
+export type ChartConfig = TimeSeriesChartConfig | PieChartConfig;
 
 export function parseChartParams(source: string): ChartConfig | null {
     const lines = source.split("\n");
@@ -42,11 +44,9 @@ export function parseChartParams(source: string): ChartConfig | null {
         }
 
         if (inChartOptions) {
-            // Parse chartOptions parameters
             const optionMatch = trimmed.match(/(\w+):\s*([^,]+),?$/);
             if (optionMatch) {
                 const [, key, valueStr] = optionMatch;
-                // Convert string values to appropriate types
                 let value: any = valueStr.trim();
                 if (value === 'true') value = true;
                 else if (value === 'false') value = false;
@@ -61,22 +61,52 @@ export function parseChartParams(source: string): ChartConfig | null {
         if (parts.length >= 2) {
             const key = parts[0];
             const val = parts.slice(1).join(":").trim();
-            params[key] = val;
+            if (key === 'yColumns') {
+                params[key] = val.split(',').map((c: string) => c.trim());
+            } else {
+                params[key] = val;
+            }
         }
     }
 
-    if (!params.table || !params.xColumn || !params.yColumns) {
+    if (!params.table || !params.chartType) {
         return null;
     }
 
-    return {
+    const baseConfig = {
         table: params.table,
-        xColumn: params.xColumn,
-        yColumns: params.yColumns.split(',').map((c: string) => c.trim()),
-        groupBy: params.groupBy?.trim(),
+        chartType: params.chartType,
         startDate: params.startDate,
         endDate: params.endDate,
-        chartType: params.chartType || 'line',
         chartOptions: Object.keys(chartOptions).length > 0 ? chartOptions : undefined
     };
+
+    switch (params.chartType) {
+        case 'pie':
+            if (!params.categoryColumn || !params.valueColumn) {
+                return null;
+            }
+            return {
+                ...baseConfig,
+                chartType: 'pie',
+                categoryColumn: params.categoryColumn,
+                valueColumn: params.valueColumn
+            };
+
+        case 'line':
+        case 'bar':
+            if (!params.xColumn || !params.yColumns) {
+                return null;
+            }
+            return {
+                ...baseConfig,
+                chartType: params.chartType,
+                xColumn: params.xColumn,
+                yColumns: Array.isArray(params.yColumns) ? params.yColumns : [params.yColumns],
+                categoryColumn: params.categoryColumn
+            };
+
+        default:
+            return null;
+    }
 }
