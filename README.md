@@ -70,11 +70,13 @@ This query will:
 Create a code block labeled with `sql-chart` for visualizations. For example:
 
 ```sql-chart
-table: Tasks
+table: Time
 chartType: pie
-categoryColumn: priority
-valueColumn: completed
+categoryColumn: tag
+valueColumn: duration
 ```
+
+![Pie Chart](./assets/pie-chart.png)
 
 ## Query Parameters
 
