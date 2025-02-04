@@ -4,8 +4,6 @@ export function buildSqlQuery(params: SqlParams): { query: string; queryParams: 
     const { 
         table, 
         columns,
-        keyColumn,
-        value,
         dateColumn,
         startDate,
         endDate,
@@ -23,10 +21,19 @@ export function buildSqlQuery(params: SqlParams): { query: string; queryParams: 
     const queryParams: any[] = [];
     const conditions: string[] = [];
 
-    // Add key-value condition if provided
-    if (keyColumn && value !== undefined) {
-        conditions.push(`"${keyColumn}" = ?`);
-        queryParams.push(value);
+    // Handle multiple filters
+    if (filterColumn && filterValue) {
+        const filterColumns = Array.isArray(filterColumn) ? filterColumn : [filterColumn];
+        const filterValues = Array.isArray(filterValue) ? filterValue : [filterValue];
+
+        if (filterColumns.length !== filterValues.length) {
+            throw new Error('Number of filter columns must match number of filter values');
+        }
+
+        filterColumns.forEach((col, index) => {
+            conditions.push(`"${col}" = ?`);
+            queryParams.push(filterValues[index]);
+        });
     }
 
     // Add date range conditions if provided
@@ -40,13 +47,7 @@ export function buildSqlQuery(params: SqlParams): { query: string; queryParams: 
             queryParams.push(endDate);
         }
     }
-
-    // Add filter condition if provided
-    if (filterColumn && filterValue !== undefined) {
-        conditions.push(`"${filterColumn}" = ?`);
-        queryParams.push(filterValue);
-    }
-
+    
     // Build the query
     let query = `SELECT ${selectCols} FROM "${table}"`;
     

@@ -17,6 +17,10 @@ export function parseSqlParams(source: string): SqlParams | null {
                 case 'columns':
                     params.columns = val.split(',').map(c => c.trim()).join(', ');
                     break;
+                case 'filterColumn':
+                case 'filterValue':
+                    params[key] = val.split(',').map(v => v.trim());
+                    break;
                 case 'limit':
                     const limitNum = parseInt(val);
                     if (!isNaN(limitNum)) params.limit = limitNum;
@@ -27,15 +31,19 @@ export function parseSqlParams(source: string): SqlParams | null {
                     }
                     break;
                 case 'table':
-                case 'keyColumn':
-                case 'value':
+                    params.table = val;
+                    break;
                 case 'dateColumn':
+                    params.dateColumn = val;
+                    break;
                 case 'startDate':
+                    params.startDate = val;
+                    break;
                 case 'endDate':
-                case 'filterColumn':
-                case 'filterValue':
+                    params.endDate = val;
+                    break;
                 case 'orderBy':
-                    params[key] = val;
+                    params.orderBy = val;
                     break;
             }
         }

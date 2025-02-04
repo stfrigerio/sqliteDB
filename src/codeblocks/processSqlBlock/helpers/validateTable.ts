@@ -33,11 +33,19 @@ export async function validateTable(db: any, params: SqlParams) {
     }
 
     // Validate filterColumn if specified
-    if (params.filterColumn && !availableColumns.includes(params.filterColumn)) {
-        return {
-            message: `Filter column "${params.filterColumn}" does not exist in table "${params.table}".`,
-            availableColumns
-        };
+    if (params.filterColumn) {
+        const filterColumns = Array.isArray(params.filterColumn) 
+            ? params.filterColumn 
+            : [params.filterColumn];
+            
+        for (const col of filterColumns) {
+            if (!availableColumns.includes(col)) {
+                return {
+                    message: `Filter column "${col}" does not exist in table "${params.table}".`,
+                    availableColumns
+                };
+            }
+        }
     }
 
     // Validate orderBy if specified

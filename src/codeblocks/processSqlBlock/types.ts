@@ -6,8 +6,8 @@ export interface SqlParams {
     dateColumn?: string;
     startDate?: string;
     endDate?: string;
-    filterColumn?: string;
-    filterValue?: string;
+    filterColumn?: string | string[];
+    filterValue?: string | string[];
     orderBy?: string;
     orderDirection?: string;
     limit?: number;

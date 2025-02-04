@@ -16,15 +16,15 @@ export async function processSqlBlock(dbService: DBService, source: string, el: 
         el.createEl("p", { text: "Example usage:" });
         el.createEl("pre", { 
             text: `table: tasks
-columns: title, status, dueDate
-dateColumn: dueDate
-startDate: 2024-01-01
-endDate: 2024-12-31
-filterColumn: status
-filterValue: active
-limit: 10
-orderBy: dueDate
-orderDirection: asc`
+    columns: title, status
+    filterColumn: status, priority
+    filterValue: active, high
+    dateColumn: dueDate
+    startDate: 2024-01-01
+    endDate: 2024-12-31
+    limit: 10
+    orderBy: dueDate
+    orderDirection: asc`
         });
         return;
     }
