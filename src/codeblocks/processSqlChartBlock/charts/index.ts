@@ -12,7 +12,6 @@ export function createChart(type: ChartType, labels: string[], datasets: any[], 
             return createBarChart(labels, datasets, options);
         case 'pie':
             return createPieChart(labels, datasets, options);
-        //todo add pie and others
         default:
             return createLineChart(labels, datasets); // fallback to line chart
     }

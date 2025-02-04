@@ -13,7 +13,8 @@ import {
 
 import { DBService } from "./src/dbService";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
-import { pickTableName, processSqlBlock, processSqlChartBlock } from "./src/helpers";
+import { processSqlBlock, processSqlChartBlock } from "./src/codeblocks";
+import { pickTableName } from "./src/helpers";
 import { SqliteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 
 export default class SqliteDBPlugin extends Plugin {
