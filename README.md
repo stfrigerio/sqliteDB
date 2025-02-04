@@ -104,3 +104,75 @@ Below is a list of available parameters you can use in your SQL blocks:
 | `chartType`     | Type of chart to create.                                           | `chartType: pie`                    |
 | `categoryColumn`| Column to use for the category in the chart.                      | `categoryColumn: priority`         |
 | `valueColumn`   | Column to use for the value in the chart.                          | `valueColumn: completed`            |
+
+Each chart takes an optional chartOptions object that can be used to customize the different chart types:
+
+### Line Chart
+
+```sql-chart
+
+table: QuantifiableHabits
+chartType: line
+
+xColumn: date
+yColumns: value
+categoryColumn: habitKey
+
+dateColumn: date
+startDate: 2025-01-01
+endDate: 2025-01-31
+
+chartOptions: {
+	fill: false,
+	tension: 0.5,
+	pointRadius: 4,
+	showLegend: true,
+	animations: true,
+	yAxisMin: 0,
+	yAxisMax: 10
+}
+
+```
+
+### Bar Chart
+
+```sql-chart
+table: QuantifiableHabits
+chartType: bar
+
+xColumn: date
+yColumns: value
+categoryColumn: habitKey
+
+dateColumn: date
+startDate: 2025-01-01
+endDate: 2025-01-31
+
+chartOptions: {
+    stacked: true,
+    horizontal: false,
+    showLegend: true,
+    animations: true,
+    tooltips: true
+}
+```
+
+### Pie Chart
+
+```sql-chart
+
+table: Money
+chartType: pie
+
+categoryColumn: tag
+valueColumn: amount
+
+dateColumn: date
+startDate: 2025-01-01
+endDate: 2025-01-31
+
+chartOptions: {
+	showLegend: true,
+	isDoughnut: true
+}
+```
