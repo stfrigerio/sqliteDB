@@ -1,94 +1,104 @@
-# Obsidian Sample Plugin
+# SQLite DB Plugin for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+The **SQLite DB Plugin for Obsidian** allows you to interact with SQLite databases directly within your Obsidian vault. You can execute SQL queries, generate charts from your data, inspect table structures, and even export table rows as notes.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+---
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## Features
 
-## First time developing plugins?
+- **SQL Query Execution**  
+  Write SQL queries in code blocks to fetch and render data from your SQLite database.
+- **Natural Results Rendering**  
+  See query results rendered as natural lists or in a custom format directly in your note.
+- **Multiple Filters & Date Range Filtering**  
+  Easily add multiple filter conditions and date ranges to your queries.
+- **Chart Visualization**  
+  Use the `sql-chart` code block to create charts (pie, line, or bar) based on your data.
+- **Table Inspection & Data Export**  
+  Inspect table structures and export table rows to new notes.
 
-Quick starting guide for new plugin devs:
+---
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+## Installation
 
-## Releasing new releases
+1. **Open Obsidian Settings**  
+  Navigate to **Community Plugins** and disable **Safe Mode**.
+2. **Browse Community Plugins**  
+  Search for **SQLite DB Plugin**, then click **Install**.
+3. **Enable the Plugin**  
+  In your Community Plugins list, enable the plugin.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+---
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## Configuration
 
-## Adding your plugin to the community plugin list
+Before using the plugin, set the path to your SQLite database in the plugin settings:
+- **Database Path:** Absolute path to your SQLite database file.  
+  _Example:_ `/home/user/path/to/database.db`
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+---
 
-## How to use
+## Usage
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+### SQL Code Blocks
 
-## Manually installing the plugin
+Create a code block labeled with `sql` to run a SQL query. For example:
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+```sql
+table: Tasks
+columns: text, completed, due
+filterColumn: completed, priority
+filterValue: 0, high
+dateColumn: due
+startDate: 2024-01-01
+endDate: 2024-12-31
+orderBy: due
+orderDirection: asc
+limit: 10
 ```
 
-If you have multiple URLs, you can also do:
+This query will:
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+- Select the `text`, `completed`, and `due` columns from the `Tasks` table.
+- Apply two filters: one on `completed` and another on `priority`.
+- Filter rows within the specified date range.
+- Order the result by the `due` column in ascending order.
+- Limit the number of rows to 10.
+
+### Chart Code Blocks
+
+Create a code block labeled with `sql-chart` for visualizations. For example:
+
+```sql-chart
+table: Tasks
+chartType: pie
+categoryColumn: priority
+valueColumn: completed
 ```
 
-## API Documentation
+## Query Parameters
 
-See https://github.com/obsidianmd/obsidian-api
+Below is a list of available parameters you can use in your SQL blocks:
+
+| Parameter       | Description                                                         | Example                           |
+| --------------- | ------------------------------------------------------------------- | --------------------------------- |
+| `table`         | **Required.** Name of the table to query.                           | `table: Tasks`                    |
+| `columns`       | Comma-separated columns to select.                                  | `columns: id, text, due`            |
+| `filterColumn`  | Column(s) to filter on. Can list multiple columns separated by commas.| `filterColumn: completed, priority` |
+| `filterValue`   | Filter value(s) for the corresponding columns in `filterColumn`.      | `filterValue: 0, high`              |
+| `dateColumn`    | Column containing date information for range filtering.             | `dateColumn: due`                 |
+| `startDate`     | Starting date for filtering.                                          | `startDate: 2024-01-01`             |
+| `endDate`       | Ending date for filtering.                                            | `endDate: 2024-12-31`               |
+| `orderBy`       | Column to order the results by.                                       | `orderBy: due`                    |
+| `orderDirection`| Direction of sort (`asc` or `desc`).                                  | `orderDirection: asc`             |
+| `limit`         | Maximum number of rows to return.                                     | `limit: 10`                       |
+
+---
+
+## Chart Parameters
+
+| Parameter       | Description                                                         | Example                           |
+| --------------- | ------------------------------------------------------------------- | --------------------------------- |
+| `chartType`     | Type of chart to create.                                           | `chartType: pie`                    |
+| `categoryColumn`| Column to use for the category in the chart.                      | `categoryColumn: priority`         |
+| `valueColumn`   | Column to use for the value in the chart.                          | `valueColumn: completed`            |

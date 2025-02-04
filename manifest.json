@@ -4,8 +4,8 @@
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "A plugin that allows to interact with sqlite databases in Obsidian",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"author": "Stefano Frigerio",
+	"authorUrl": "https://stefanofrigerio.dev",
+	"fundingUrl": "",
 	"isDesktopOnly": false
 }
