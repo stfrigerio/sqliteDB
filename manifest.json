@@ -1,6 +1,6 @@
 {
-	"id": "sqliteDB",
-	"name": "sqliteDB",
+	"id": "sqlite-db",
+	"name": "Sqlite DB",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "A plugin that allows to interact with sqlite databases in Obsidian",
