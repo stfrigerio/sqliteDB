@@ -1,4 +1,4 @@
-import { Notice, FileSystemAdapter } from "obsidian";
+import { Notice, App } from "obsidian";
 import initSqlJs, { Database } from "sql.js";
 import { readFileSync } from "fs";
 import { SqliteDBSettings } from "./types";
@@ -8,6 +8,11 @@ import { SqliteDBSettings } from "./types";
  */
 export class DBService {
 	private db: Database | null = null;
+	private app: App;
+
+	constructor(app: App) {
+		this.app = app;
+	}	
 
 	/**
 	 * Ensure the DB is loaded. If it's not loaded yet, load it from disk.
@@ -20,10 +25,11 @@ export class DBService {
 			new Notice("No DB path set in plugin settings.");
 			return;
 		}
+
 		if (!this.db || forceReload) {
 			try {
 				const SQL = await initSqlJs({
-					locateFile: (file) => `${basePath}/.obsidian/plugins/sqliteDB/${file}`,
+					locateFile: (file) => `${basePath}/${this.app.vault.configDir}/plugins/sqliteDB/${file}`,
 				});
 				const fileBuffer = readFileSync(settings.dbFilePath);
 				const uint8Array = new Uint8Array(fileBuffer);
