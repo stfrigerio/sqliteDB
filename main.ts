@@ -3,7 +3,6 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
-	Modal,
 	Notice,
 	FileSystemAdapter,
 	Editor,
@@ -25,7 +24,7 @@ export default class SqliteDBPlugin extends Plugin {
 		console.log("Loading SqliteDBPlugin...");
 		await this.loadSettings();
 
-		this.dbService = new DBService();
+		this.dbService = new DBService(this.app);
 
 		await this.openDatabase();
 
