@@ -62,11 +62,12 @@ export async function convertEntriesInNotes(dbService: DBService, tableName: str
 
 	// Check if folder already exists; if not, create it
 	let folder = app.vault.getAbstractFileByPath(targetFolderPath);
-	if (!folder) {
-		folder = await app.vault.createFolder(targetFolderPath);
-	} else if (!(folder instanceof TFolder)) {
+	if (folder && !(folder instanceof TFolder)) {
 		new Notice(`A file named "${folderName}" already exists and is not a folder.`);
 		return;
+	}
+	if (!folder) {
+		folder = await app.vault.createFolder(targetFolderPath);
 	}
 
 	// 4) Query *all* rows from the table
@@ -98,9 +99,11 @@ export async function convertEntriesInNotes(dbService: DBService, tableName: str
 
 		// If file already exists, append a suffix
 		let suffix = 1;
-		while (app.vault.getAbstractFileByPath(notePath)) {
+		let existingFile = app.vault.getAbstractFileByPath(notePath);
+		while (existingFile && existingFile instanceof TFile) {
 			suffix++;
 			notePath = `${targetFolderPath}/${safeFileName}_${suffix}.md`;
+			existingFile = app.vault.getAbstractFileByPath(notePath);
 		}
 
 		// Build frontmatter with all columns

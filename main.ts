@@ -40,7 +40,7 @@ export default class SqliteDBPlugin extends Plugin {
 		
 		this.addCommand({
 			id: "dump-table-to-notes",
-			name: "Dump Table to Notes",
+			name: "Dump table to notes",
 			callback: async () => {
 				await this.openDatabase(); // ensure DB is loaded
 			
@@ -107,10 +107,8 @@ class SqliteDBSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "SQLite DB Plugin Settings" });
-
 		new Setting(containerEl)
-			.setName("Database File Path")
+			.setName("Database file path")
 			.setDesc("Absolute path to the .db file on disk.")
 			.addText((text) =>
 				text
