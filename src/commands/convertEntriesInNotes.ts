@@ -50,13 +50,6 @@ export async function convertEntriesInNotes(dbService: DBService, tableName: str
 	}
 
 	// 3) Create or get the folder at the root: "<tableName>-dump"
-	let basePath = "";
-	if (app.vault.adapter instanceof FileSystemAdapter) {
-		basePath = app.vault.adapter.getBasePath();
-	} else {
-		new Notice("This plugin only works in a local vault.");
-		return;
-	}
 	const folderName = `${tableName}-dump`;
 	const targetFolderPath = normalizePath(folderName);
 

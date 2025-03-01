@@ -78,11 +78,14 @@ export default class SqliteDBPlugin extends Plugin {
 
 	private async openDatabase(forceReload = true) {
 		const adapter = this.app.vault.adapter;
-		if (!(adapter instanceof FileSystemAdapter)) {
-			new Notice("This plugin currently only works on desktop.");
-			return;
+		let basePath: string;
+		
+		if (adapter instanceof FileSystemAdapter) {
+			basePath = adapter.getBasePath();
+		} else {
+			basePath = (adapter as any).getFullPath("");
 		}
-		const basePath = adapter.getBasePath();
+		
 		await this.dbService.ensureDBLoaded(this.settings, basePath, forceReload);
 	}
 
