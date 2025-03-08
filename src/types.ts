@@ -1,7 +1,7 @@
-export interface SqliteDBSettings {
+export interface SQLiteDBSettings {
 	dbFilePath: string;
 }
 
-export const DEFAULT_SETTINGS: SqliteDBSettings = {
+export const DEFAULT_SETTINGS: SQLiteDBSettings = {
 	dbFilePath: "",
 };

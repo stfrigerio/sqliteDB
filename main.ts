@@ -14,14 +14,14 @@ import { DBService } from "./src/dbService";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
 import { processSqlBlock, processSqlChartBlock } from "./src/codeblocks";
 import { pickTableName } from "./src/helpers";
-import { SqliteDBSettings, DEFAULT_SETTINGS } from "./src/types";
+import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 
-export default class SqliteDBPlugin extends Plugin {
-	settings: SqliteDBSettings;
+export default class SQLiteDBPlugin extends Plugin {
+	settings: SQLiteDBSettings;
 	private dbService: DBService;
 
 	async onload() {
-		console.log("Loading SqliteDBPlugin...");
+		console.log("Loading SQLiteDBPlugin...");
 		await this.loadSettings();
 
 		this.dbService = new DBService(this.app);
@@ -69,11 +69,11 @@ export default class SqliteDBPlugin extends Plugin {
 			}
 		);
 
-		this.addSettingTab(new SqliteDBSettingTab(this.app, this));
+		this.addSettingTab(new SQLiteDBSettingTab(this.app, this));
 	}
 
 	onunload() {
-		console.log("Unloading SqliteDBPlugin...");
+		console.log("Unloading SQLiteDBPlugin...");
 	}
 
 	private async openDatabase(forceReload = true) {
@@ -98,10 +98,10 @@ export default class SqliteDBPlugin extends Plugin {
 	}
 }
 
-class SqliteDBSettingTab extends PluginSettingTab {
-	plugin: SqliteDBPlugin;
+class SQLiteDBSettingTab extends PluginSettingTab {
+	plugin: SQLiteDBPlugin;
 
-	constructor(app: App, plugin: SqliteDBPlugin) {
+	constructor(app: App, plugin: SQLiteDBPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

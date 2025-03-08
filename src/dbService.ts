@@ -1,7 +1,7 @@
 import { Notice, App } from "obsidian";
 import initSqlJs, { Database } from "sql.js";
 import { readFileSync } from "fs";
-import { SqliteDBSettings } from "./types";
+import { SQLiteDBSettings } from "./types";
 
 /**
  * This class manages loading/reloading the SQLite DB using sql.js
@@ -20,7 +20,7 @@ export class DBService {
 	 *
 	 * If `forceReload` is true, always reload from disk.
 	 */
-	async ensureDBLoaded(settings: SqliteDBSettings, basePath: string, forceReload = false) {
+	async ensureDBLoaded(settings: SQLiteDBSettings, basePath: string, forceReload = false) {
 		if (!settings.dbFilePath) {
 			new Notice("No DB path set in plugin settings.");
 			return;
