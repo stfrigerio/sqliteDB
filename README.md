@@ -27,7 +27,8 @@ The **SQLite DB Plugin for Obsidian** allows you to interact with SQLite databas
   Search for **SQLite DB Plugin**, then click **Install**.
 3. **Enable the Plugin**  
   In your Community Plugins list, enable the plugin.
-
+4. **Download the .wasm file**
+  From the repository and put in the folder of the plugin (.obsidian/plugins/sqlite-db)
 ---
 
 ## Configuration
