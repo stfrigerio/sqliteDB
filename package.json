@@ -1,6 +1,6 @@
 {
 	"name": "sqlitedb",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "A plugin that allows to interact with sqlite databases in Obsidian",
 	"main": "main.js",
 	"scripts": {
