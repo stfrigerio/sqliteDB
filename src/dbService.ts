@@ -29,7 +29,7 @@ export class DBService {
 		if (!this.db || forceReload) {
 			try {
 				const SQL = await initSqlJs({
-					locateFile: (file) => `${basePath}/${this.app.vault.configDir}/plugins/sqliteDB/${file}`,
+					locateFile: (file) => `${basePath}/${this.app.vault.configDir}/plugins/sqlite-db/${file}`,
 				});
 				const fileBuffer = readFileSync(settings.dbFilePath);
 				const uint8Array = new Uint8Array(fileBuffer);
