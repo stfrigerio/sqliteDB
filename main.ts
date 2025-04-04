@@ -15,6 +15,7 @@ import { processSqlBlock, processSqlChartBlock, renderDatePicker } from "./src/c
 import { pickTableName } from "./src/helpers";
 import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 import { injectDatePickerStyles } from "src/styles/datePickerInject";
+import "./src/webcomponents/habitCounter";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
