@@ -2,6 +2,7 @@ import { Notice } from "obsidian";
 import { DBService } from "../../dbService";
 import { parseChartParams, validateColumns, buildSqlQuery, processChartData } from "./helpers";
 import { ChartType, createChart } from "./charts";
+import { pluginState } from "../../pluginState";
 
 export async function processSqlChartBlock(dbService: DBService, source: string, el: HTMLElement) {
     const db = dbService.getDB();
@@ -11,7 +12,10 @@ export async function processSqlChartBlock(dbService: DBService, source: string,
         return;
     }
 
-    const config = parseChartParams(source);
+    // replace @date with the selected date
+    const injectedSource = source.replace(/@date/g, pluginState.selectedDate);
+    const config = parseChartParams(injectedSource);
+
     if (!config) {
         // @ts-ignore
         const message = config?.chartType === 'pie' 

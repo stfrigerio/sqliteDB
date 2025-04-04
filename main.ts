@@ -3,7 +3,6 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
-	Notice,
 	FileSystemAdapter,
 	Editor,
 	MarkdownView,
@@ -12,21 +11,22 @@ import {
 
 import { DBService } from "./src/dbService";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
-import { processSqlBlock, processSqlChartBlock } from "./src/codeblocks";
+import { processSqlBlock, processSqlChartBlock, renderDatePicker } from "./src/codeblocks";
 import { pickTableName } from "./src/helpers";
 import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
+import { injectDatePickerStyles } from "src/styles/datePickerInject";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
 	private dbService: DBService;
 
 	async onload() {
-		console.log("Loading SQLiteDBPlugin...");
+		// init
 		await this.loadSettings();
-
 		this.dbService = new DBService(this.app);
-
 		await this.openDatabase();
+
+		injectDatePickerStyles();
 
 		this.addCommand({
 			id: "inspect-table-structure",
@@ -42,7 +42,7 @@ export default class SQLiteDBPlugin extends Plugin {
 			id: "dump-table-to-notes",
 			name: "Dump table to notes",
 			callback: async () => {
-				await this.openDatabase(); // ensure DB is loaded
+				await this.openDatabase();
 			
 				// 1) pick a table
 				const chosenTable = await pickTableName(this.dbService, this.app);
@@ -56,7 +56,7 @@ export default class SQLiteDBPlugin extends Plugin {
 		});
 
 		this.registerMarkdownCodeBlockProcessor(
-			"sql", // <-- the name of your code block (```sql)
+			"sql",
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
 				await processSqlBlock(this.dbService, source, el);
 			}
@@ -66,6 +66,13 @@ export default class SQLiteDBPlugin extends Plugin {
 			"sql-chart",
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
 				await processSqlChartBlock(this.dbService, source, el);
+			}
+		);
+
+		this.registerMarkdownCodeBlockProcessor(
+			"date-picker",
+			async (source: string, el: HTMLElement) => {
+				renderDatePicker(el, this.app);
 			}
 		);
 

@@ -1,6 +1,7 @@
 import { Notice } from "obsidian";
 import { DBService } from "../../dbService";
 import { parseSqlParams, validateTable, buildSqlQuery, renderResults } from "./helpers";
+import { pluginState } from "../../pluginState";
 
 export async function processSqlBlock(dbService: DBService, source: string, el: HTMLElement) {
     const db = dbService.getDB();
@@ -10,7 +11,10 @@ export async function processSqlBlock(dbService: DBService, source: string, el: 
         return;
     }
 
-    const params = parseSqlParams(source);
+    // replace @date with the selected date
+    const injectedSource = source.replace(/@date/g, pluginState.selectedDate);
+    const params = parseSqlParams(injectedSource);
+    
     if (!params) {
         el.createEl("p", { text: "Missing required parameter: table" });
         el.createEl("p", { text: "Example usage:" });
