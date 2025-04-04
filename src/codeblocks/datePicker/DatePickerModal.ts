@@ -84,7 +84,7 @@ export class DatePickerModal extends Modal {
 
 		const confirmBtn = footer.createEl("button", { text: "Select", cls: "mod-cta" }); // Use Obsidian's primary button style
 		confirmBtn.onclick = () => {
-			const iso = this.selectedDate.toISOString().split("T")[0];
+			const iso = `${this.selectedDate.getFullYear()}-${String(this.selectedDate.getMonth() + 1).padStart(2, '0')}-${String(this.selectedDate.getDate()).padStart(2, '0')}`;
 			pluginState.selectedDate = iso; // Update global state
 			new Notice(`Date set to ${iso}`);
 			// Optional: Force re-render if your plugin uses the date reactively in preview
