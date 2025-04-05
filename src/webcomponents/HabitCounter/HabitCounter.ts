@@ -75,20 +75,29 @@ export class HabitCounter extends HTMLElement {
         this.initialDate = this.getAttribute("date") ?? "@date";
         this.emoji = this.getAttribute("emoji") ?? "❓";
         this.table = this.getAttribute("table") ?? "";
+        
+        // --- Defer UI update and load trigger slightly ---
+        requestAnimationFrame(() => {
+            //& console.log(`[HabitCounter Component ${this.habitKey}] Deferred execution starting.`);
+            //? Now access uiElements, which should be reliably assigned.
+            console.log(`[HabitCounter Component ${this.habitKey}] DEBUG: Inspecting this.uiElements within deferred call:`, this.uiElements);
 
-        updateStaticUI(this.uiElements, this.emoji, this.habitKey); //~ Update static parts of UI
+            updateStaticUI(this.uiElements, this.emoji, this.habitKey); //~ Update static parts of UI
 
-        if (!this.table) {
-            console.warn(`[HabitCounter Component ${this.habitKey}] Table attribute missing.`);
-            this.showErrorState("No table");
-            return;
-        }
+            if (!this.table) {
+                console.warn(`[HabitCounter Component ${this.habitKey}] Table attribute missing.`);
+                this.showErrorState("No table");
+                return;
+            }
 
-        if (!this._initialLoadTriggered) {
-            this._initialLoadTriggered = true;
-           //& console.log(`[HabitCounter Component ${this.habitKey}] Triggering initial loadHabitData...`);
-            loadHabitData(this).catch(err => console.error("Unhandled error during initial load:", err)); //~ Load data via helper
-        }
+            if (!this._initialLoadTriggered) {
+                this._initialLoadTriggered = true;
+                //& console.log(`[HabitCounter Component ${this.habitKey}] Triggering initial loadHabitData...`);
+                loadHabitData(this).catch(err => console.error("Unhandled error during initial load:", err)); //~ Load data via helper
+            } else {
+                console.log(`[HabitCounter Component ${this.habitKey}] Initial load already triggered.`);
+            }
+        });
     }
 
     //? Public method called by click handlers via instance reference

@@ -1,5 +1,3 @@
-// src/webcomponents/habitCounter/dom/uiUpdaters.ts
-
 //? Interface defining the elements needed by UI updaters.
 export interface HabitCounterUIElements {
     wrapper: HTMLElement | null;
@@ -19,12 +17,13 @@ export function updateDisplayValue(elements: HabitCounterUIElements, newValue: n
     }
 }
 
-/** Updates label text and button aria-labels based on component state. */
 export function updateStaticUI(elements: HabitCounterUIElements, emoji: string, habitKey: string): void {
-    //& console.log(`[HabitCounterUI] updateStaticUI called for: ${habitKey}`);
     if (elements.labelElement) {
-        elements.labelElement.textContent = `${emoji} ${habitKey}:`;
-       //& console.log(`[HabitCounterUI] Set label text to: "${elements.labelElement.textContent}"`);
+        const newLabelText = `${emoji} ${habitKey}:`;
+        console.log(`[HabitCounterUI] DEBUG: Attempting to set label textContent to: "${newLabelText}"`);
+        elements.labelElement.textContent = newLabelText;
+    } else {
+        console.error("[HabitCounterUI] updateStaticUI: labelElement was null.");
     }
     if (elements.minusButton) {
         elements.minusButton.setAttribute("aria-label", `Decrease ${habitKey} value`);
@@ -33,7 +32,6 @@ export function updateStaticUI(elements: HabitCounterUIElements, emoji: string, 
         elements.plusButton.setAttribute("aria-label", `Increase ${habitKey} value`);
     }
 }
-
 
 /** Sets the component to visually indicate an error state. */
 export function setComponentErrorState(elements: HabitCounterUIElements, message: string = "Error"): void {
