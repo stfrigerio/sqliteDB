@@ -7,11 +7,14 @@ interface UpdateComponentInstance {
     habitDataService: HabitDataService | null;
     table: string;
     habitKey: string;
-    initialDate: string; // Needed for effective date calculation
-    currentValue: number; // The current value held by the component
-    _updateDisplay: (value: number) => void; // Method to update UI
-    showErrorState: (message: string) => void; // Method to show error UI
-    clearErrorState: () => void; // Method to clear error UI
+    initialDate: string;
+    currentValue: number;
+    habitIdCol: string;
+    valueCol: string;
+    dateCol: string;
+    _updateDisplay: (value: number) => void;
+    showErrorState: (message: string) => void;
+    clearErrorState: () => void;
 }
 
 
@@ -21,7 +24,6 @@ interface UpdateComponentInstance {
  * @param delta - The amount to change the value by (+1 or -1).
  */
 export async function updateHabitData(instance: UpdateComponentInstance, delta: number): Promise<void> {
-    //& console.log(`[UpdateHabitData ${instance.habitKey}] updateHabitData running with delta: ${delta}.`);
     if (!instance.habitDataService || !instance.table || !instance.habitKey) {
         console.error(`[UpdateHabitData ${instance.habitKey}] Cannot update data: Missing service, table, or habitKey.`);
         instance.showErrorState("Save Error");
@@ -35,13 +37,15 @@ export async function updateHabitData(instance: UpdateComponentInstance, delta: 
     const args = {
         table: instance.table,
         habitKey: instance.habitKey,
-        date: calculateEffectiveDate(instance.initialDate), //~ Delegate date calculation
+        date: calculateEffectiveDate(instance.initialDate),
         newValue: newValue,
+        habitIdCol: instance.habitIdCol,
+        valueCol: instance.valueCol,
+        dateCol: instance.dateCol,
     };
 
     try {
         await instance.habitDataService.updateHabitValue(args);
-       //& console.log(`[UpdateHabitData ${instance.habitKey}] Data updated successfully to: ${newValue}`);
         instance._updateDisplay(newValue); //? Update UI only on successful save
         instance.clearErrorState();
     } catch (error) {

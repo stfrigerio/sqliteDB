@@ -7,6 +7,5 @@ import { pluginState } from "../../../pluginState";
  */
 export function calculateEffectiveDate(initialDate: string): string {
     const effectiveDate = initialDate === "@date" ? pluginState.selectedDate : initialDate;
-    //& console.log(`[CalculateEffectiveDate] Calculated: ${effectiveDate} (Initial: ${initialDate}, Global: ${pluginState.selectedDate})`);
     return effectiveDate;
 }

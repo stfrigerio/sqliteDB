@@ -20,6 +20,9 @@ export class HabitCounter extends HTMLElement {
     public initialDate: string = "";
     public emoji: string = "";
     public table: string = "";
+    public habitIdCol: string = "";
+    public valueCol: string = "";
+    public dateCol: string = "";
     public currentValue: number = 0;
     private _initialLoadTriggered: boolean = false;
     private _isInitialized: boolean = false;
@@ -36,7 +39,6 @@ export class HabitCounter extends HTMLElement {
     // --- Lifecycle ---
     connectedCallback() {
         if (this._isInitialized) return;
-        //& console.log("[HabitCounter Component] connectedCallback - Initializing...");
 
         //~ Create handlers bound to this instance *before* building DOM
         const handlers = {
@@ -47,12 +49,10 @@ export class HabitCounter extends HTMLElement {
         this.uiElements = buildHabitCounterDOM(this.attachShadow({ mode: "open" }), handlers); //~ Build DOM via helper
         applyHabitCounterStyles(this.shadowRoot!); //~ Apply styles via helper
         this._isInitialized = true;
-       //& console.log("[HabitCounter Component] Initialization complete.");
     }
 
     // --- Public Methods ---
     public setDbService(service: DBService): void {
-       //& console.log("[HabitCounter Component] setDbService called.");
         if (!service) {
             console.error("[HabitCounter Component] Invalid DBService provided.");
             this.showErrorState("Setup Error"); //~ Use helper
@@ -70,29 +70,27 @@ export class HabitCounter extends HTMLElement {
 
     // --- Internal Orchestration ---
     private _readAttributesAndInitLoad(): void {
-        //& console.log("[HabitCounter Component] _readAttributesAndInitLoad running.");
         this.habitKey = this.getAttribute("habit") ?? "";
         this.initialDate = this.getAttribute("date") ?? "@date";
         this.emoji = this.getAttribute("emoji") ?? "❓";
         this.table = this.getAttribute("table") ?? "";
-        
+        this.habitIdCol = this.getAttribute("data-habit-id-col") ?? "";
+        this.valueCol = this.getAttribute("data-value-col") ?? "";
+        this.dateCol = this.getAttribute("data-date-col") ?? "";
+
         // --- Defer UI update and load trigger slightly ---
         requestAnimationFrame(() => {
-            //& console.log(`[HabitCounter Component ${this.habitKey}] Deferred execution starting.`);
-            //? Now access uiElements, which should be reliably assigned.
-            console.log(`[HabitCounter Component ${this.habitKey}] DEBUG: Inspecting this.uiElements within deferred call:`, this.uiElements);
-
             updateStaticUI(this.uiElements, this.emoji, this.habitKey); //~ Update static parts of UI
 
-            if (!this.table) {
-                console.warn(`[HabitCounter Component ${this.habitKey}] Table attribute missing.`);
-                this.showErrorState("No table");
-                return;
+            if (!this.table || !this.habitKey || !this.habitIdCol || !this.valueCol || !this.dateCol) {
+                console.warn(`[HabitCounter Component ${this.habitKey}] Missing one or more required attributes: table, habit, data-habit-id-col, data-value-col, data-date-col.`);
+                this.showErrorState("Config Error");
+                updateStaticUI(this.uiElements, this.emoji, this.habitKey || "Config Error");
+                return; // Stop initialization if config is bad
             }
 
             if (!this._initialLoadTriggered) {
                 this._initialLoadTriggered = true;
-                //& console.log(`[HabitCounter Component ${this.habitKey}] Triggering initial loadHabitData...`);
                 loadHabitData(this).catch(err => console.error("Unhandled error during initial load:", err)); //~ Load data via helper
             } else {
                 console.log(`[HabitCounter Component ${this.habitKey}] Initial load already triggered.`);
@@ -102,13 +100,11 @@ export class HabitCounter extends HTMLElement {
 
     //? Public method called by click handlers via instance reference
     public async _updateData(delta: number): Promise<void> {
-        //& console.log(`[HabitCounter Component ${this.habitKey}] _updateData called with delta: ${delta}`);
        await updateHabitData(this, delta); //~ Update data via helper
     }
 
     //? Public method called by data helpers to update display
     public _updateDisplay(newValue: number): void {
-       //& console.log(`[HabitCounter Component ${this.habitKey}] _updateDisplay called with value: ${newValue}`);
         this.currentValue = newValue; //? Update internal state first
         updateDisplayValue(this.uiElements, newValue); //~ Update DOM via helper
         this.clearErrorState(); //? Clear errors on successful update

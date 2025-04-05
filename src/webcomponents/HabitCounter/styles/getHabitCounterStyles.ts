@@ -1,6 +1,5 @@
 /** Returns the CSS string for the component's Shadow DOM. */
 export function getHabitCounterStyles(): string {
-    //& console.log("[HabitCounterStyles] getHabitCounterStyles called.");
     
     return `
         :host { display: inline-flex; vertical-align: middle; }

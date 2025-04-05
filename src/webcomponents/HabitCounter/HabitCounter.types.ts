@@ -1,16 +1,20 @@
-//? Defines the expected structure of a record fetched from the habit table.
+//? Expected structure returned by the data service fetch method.
 export interface HabitRecord {
-    value: number; //^ Assuming the column name for the count is 'value'
+    value: number;
 }
 
-//? Defines the properties needed to identify and update a habit entry.
+//? Base arguments for identifying a habit entry, now includes column names.
 export interface HabitDataArgs {
     table: string;
-    habitKey: string; //^ Assuming the column name for the habit identifier is 'habitKey'
+    habitKey: string; //? The *value* identifying the specific habit
     date: string;
+    //^ Column Names specified by the user
+    habitIdCol: string;
+    valueCol: string;
+    dateCol: string;
 }
 
-//? Combined arguments including the new value for updates.
+//? Arguments for updating, inheriting base args and adding the new value.
 export interface UpdateHabitDataArgs extends HabitDataArgs {
     newValue: number;
 }

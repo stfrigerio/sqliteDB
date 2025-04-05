@@ -22,22 +22,17 @@ export const registerHabitCounter = (el: HTMLElement, dbService: DBService) => {
         const date = placeholderEl.dataset.date;
         const emoji = placeholderEl.dataset.emoji;
         const table = placeholderEl.dataset.table;
+        const habitIdCol = placeholderEl.dataset.habitIdCol; 
+        const valueCol = placeholderEl.dataset.valueCol;     
+        const dateCol = placeholderEl.dataset.dateCol; 
 
-        // --- Validation ---
-        if (!habitKey) {
-            console.warn("[HabitCounter Reg] Placeholder missing data-habit:", placeholderEl);
-            placeholderEl.textContent = "[Missing habit name]";
+        if (!habitKey || !table || !habitIdCol || !valueCol || !dateCol) {
+            console.warn("[HabitCounter Reg] Placeholder missing one or more required data attributes (habit, table, habit-id-col, value-col, date-col):", placeholderEl);
+            placeholderEl.textContent = "[Config Error]";
             return;
         }
-        if (!table) {
-            console.warn(`[HabitCounter Reg] Placeholder for habit "${habitKey}" missing data-table:`, placeholderEl);
-            placeholderEl.textContent = "[Missing table name]";
-            return;
-        }
-        // --- End Validation ---
 
         try {
-            //& console.log(`[HabitCounter Reg] Creating component for habit: ${habitKey}, table: ${table}`);
             const component = document.createElement("habit-counter") as HabitCounter;
 
             //^ Set attributes that the component will read later
@@ -46,14 +41,14 @@ export const registerHabitCounter = (el: HTMLElement, dbService: DBService) => {
             if (date) component.setAttribute("date", date);
             else component.setAttribute("date", "@date");
             if (emoji) component.setAttribute("emoji", emoji);
+            component.setAttribute("data-habit-id-col", habitIdCol);
+            component.setAttribute("data-value-col", valueCol);
+            component.setAttribute("data-date-col", dateCol);
 
-            //& console.log(`[HabitCounter Reg] Injecting DBService for habit: ${habitKey}`);
             //? Inject the DBService dependency - component reads attributes inside this call now
             component.setDbService(dbService);
 
             placeholderEl.replaceWith(component);
-            //& console.log(`[HabitCounter Reg] Replacement successful for habit: ${habitKey}`);
-
         } catch (error) {
             console.error(`[HabitCounter Reg] Error processing placeholder for habit "${habitKey}":`, error, placeholderEl);
             placeholderEl.textContent = "[Error Loading Counter]";

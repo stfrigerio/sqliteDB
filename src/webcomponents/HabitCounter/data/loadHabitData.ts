@@ -6,17 +6,19 @@ interface LoadComponentInstance {
     habitDataService: HabitDataService | null;
     table: string;
     habitKey: string;
-    initialDate: string; // Needed for effective date calculation
-    _updateDisplay: (value: number) => void; // Method to update UI
-    showErrorState: (message: string) => void; // Method to show error UI
+    initialDate: string;
+    habitIdCol: string;
+    valueCol: string;
+    dateCol: string;
+    _updateDisplay: (value: number) => void;
+    showErrorState: (message: string) => void;
 }
 
 /**
- * //? Orchestrates loading the habit data using the HabitDataService.
+ * Orchestrates loading the habit data using the HabitDataService.
  * @param instance - The HabitCounter component instance.
  */
 export async function loadHabitData(instance: LoadComponentInstance): Promise<void> {
-    //& console.log(`[LoadHabitData ${instance.habitKey}] loadHabitData running.`);
     if (!instance.habitDataService || !instance.table || !instance.habitKey) {
         console.error(`[LoadHabitData ${instance.habitKey}] Cannot load data: Missing service, table, or habitKey.`);
         instance.showErrorState("Load Error");
@@ -26,12 +28,14 @@ export async function loadHabitData(instance: LoadComponentInstance): Promise<vo
     const args = {
         table: instance.table,
         habitKey: instance.habitKey,
-        date: calculateEffectiveDate(instance.initialDate), //~ Delegate date calculation
+        date: calculateEffectiveDate(instance.initialDate),
+        habitIdCol: instance.habitIdCol,
+        valueCol: instance.valueCol,
+        dateCol: instance.dateCol,
     };
 
     try {
         const value = await instance.habitDataService.fetchHabitValue(args);
-       //& console.log(`[LoadHabitData ${instance.habitKey}] Data loaded successfully: ${value}`);
         instance._updateDisplay(value);
     } catch (error) {
         console.error(`[LoadHabitData ${instance.habitKey}] Failed to load data:`, error);
