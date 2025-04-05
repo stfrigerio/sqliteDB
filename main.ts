@@ -17,6 +17,7 @@ import { injectDatePickerStyles } from "src/styles/datePickerInject";
 import { injectDateNavigatorStyles, removeDateNavigatorStyles } from './src/styles/dateNavigationInject';
 
 import { registerHabitCounter } from "./src/webcomponents/HabitCounter/registerHabitCounter";
+import { registerBooleanSwitch } from "src/webcomponents/BooleanSwitch/registerBooleanSwitch";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
@@ -31,10 +32,13 @@ export default class SQLiteDBPlugin extends Plugin {
 		injectDatePickerStyles();
         injectDateNavigatorStyles(); 
 
+		//? Components
 		this.registerMarkdownPostProcessor((el, ctx) => {
 			registerHabitCounter(el, this.dbService);
+			registerBooleanSwitch(el, this.dbService);
 		});
 
+		//? Commands
 		this.addCommand({
 			id: "inspect-table-structure",
 			name: "Inspect table structure",
@@ -61,6 +65,7 @@ export default class SQLiteDBPlugin extends Plugin {
 			},
 		});
 
+		//? Codeblocks
 		this.registerMarkdownCodeBlockProcessor(
 			"sql",
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {

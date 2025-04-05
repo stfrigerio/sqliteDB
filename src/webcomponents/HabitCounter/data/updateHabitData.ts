@@ -1,5 +1,5 @@
-import { HabitDataService } from "../services/HabitDataService";
-import { calculateEffectiveDate } from "./calculateEffectiveDate";
+import { HabitDataService } from "../../services/HabitDataService";
+import { calculateEffectiveDate } from "../../services/utils/calculateEffectiveDate";
 import { Notice } from "obsidian";
 
 //? Interface describing the necessary parts of the component instance for updating.

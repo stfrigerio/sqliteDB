@@ -1,5 +1,5 @@
 import { DBService } from "../../DBService";
-import { HabitDataService } from "./services/HabitDataService";
+import { HabitDataService } from "../services/HabitDataService";
 import { applyHabitCounterStyles } from "./styles/applyHabitCounterStyles";
 import { buildHabitCounterDOM } from "./dom/buildHabitCounterDOM";
 import { createDecrementHandler, createIncrementHandler } from "./eventHandlers/clickHandlers";
@@ -12,7 +12,7 @@ import {
     clearComponentErrorState,
     HabitCounterUIElements
 } from "./dom/uiUpdaters";
-import { DATE_CHANGED_EVENT_NAME, pluginState } from "../../pluginState";
+import { DATE_CHANGED_EVENT_NAME, } from "../../pluginState";
 
 //? Main Web Component class, acts as an orchestrator.
 export class HabitCounter extends HTMLElement {
@@ -33,9 +33,7 @@ export class HabitCounter extends HTMLElement {
 
     // --- Shadow DOM Element References ---
     //? Store the object returned by the builder
-    private uiElements: HabitCounterUIElements = {
-        wrapper: null, valueDisplay: null, labelElement: null, minusButton: null, plusButton: null
-    };
+    private uiElements: HabitCounterUIElements
 
     private _isListeningForDateChanges: boolean = false; // Prevent multiple listeners
 

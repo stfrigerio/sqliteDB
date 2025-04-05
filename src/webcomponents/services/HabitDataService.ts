@@ -1,5 +1,5 @@
-import { DBService } from "../../../DBService";
-import { HabitRecord, HabitDataArgs, UpdateHabitDataArgs } from "../HabitCounter.types";
+import { DBService } from "../../DBService";
+import { HabitRecord, HabitDataArgs, UpdateHabitDataArgs } from "../HabitCounter/HabitCounter.types";
 import { quoteSqlIdentifier } from "./utils/quoteSqlIdentifier";
 import { validateFetchArgs, validateUpdateArgs } from "./utils/validateHabitArgs";
 
@@ -50,12 +50,25 @@ export class HabitDataService {
             const safeValueCol = quoteSqlIdentifier(args.valueCol);
             const safeDateCol = quoteSqlIdentifier(args.dateCol);
 
-            //? Attempt to fetch existing UUID
-            const fetchUuidSql = `SELECT uuid FROM ${safeTable} WHERE ${safeHabitIdCol} = ? AND ${safeDateCol} = ?`;
-            const fetchUuidParams = [args.habitKey, args.date];
-            const uuidResult = await this.dbService.getQuery<UuidResult>(fetchUuidSql, fetchUuidParams);
-            const existingUuid = uuidResult?.[0]?.uuid;
+            let existingUuid: string | undefined;
 
+            //? Attempt to fetch existing UUID
+            try {
+                //^ Attempt to fetch UUID. Assumes the column is named 'uuid' if used.
+                const fetchUuidSql = `SELECT uuid FROM ${safeTable} WHERE ${safeHabitIdCol} = ? AND ${safeDateCol} = ?`;
+                const uuidResult = await this.dbService.getQuery<{ uuid: string }>(fetchUuidSql, [args.habitKey, args.date]);
+                existingUuid = uuidResult?.[0]?.uuid;
+            } catch (error) {
+                if (error instanceof Error && /no such column|does not exist/i.test(error.message) && error.message.includes('uuid')) {
+                    //^ It's expected that 'uuid' might not exist. Log for info and proceed without UUID.
+                    console.log(`[HabitDataService] Info: Optional 'uuid' column not found in table '${args.table}'. Proceeding with standard upsert.`);
+                    existingUuid = undefined; // Ensure it's undefined so the INSERT path is taken
+                } else {
+                    //^ A different, unexpected error occurred during the UUID fetch, re-throw it.
+                    console.error(`[HabitDataService] Error fetching potential UUID for ${args.habitKey} on ${args.date}:`, error);
+                    throw error; // Re-throw unexpected errors
+                }
+            }
 
             if (existingUuid && typeof existingUuid === 'string') {
                 const updateSql = `UPDATE ${safeTable} SET ${safeValueCol} = ? WHERE uuid = ?`;
