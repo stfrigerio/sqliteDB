@@ -9,11 +9,12 @@ import {
 import { DBService } from "./src/DBService";
 import { SQLiteDBSettingTab } from "./src/settingTab";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
-import { processSqlBlock, processSqlChartBlock, renderDatePicker } from "./src/codeblocks";
+import { processSqlBlock, processSqlChartBlock, DateNavigatorRenderer } from "./src/codeblocks";
 import { pickTableName } from "./src/helpers";
 import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 
 import { injectDatePickerStyles } from "src/styles/datePickerInject";
+import { injectDateNavigatorStyles, removeDateNavigatorStyles } from './src/styles/dateNavigationInject';
 
 import { registerHabitCounter } from "./src/webcomponents/HabitCounter/registerHabitCounter";
 
@@ -28,6 +29,7 @@ export default class SQLiteDBPlugin extends Plugin {
 		await this.openDatabase();
 
 		injectDatePickerStyles();
+        injectDateNavigatorStyles(); 
 
 		this.registerMarkdownPostProcessor((el, ctx) => {
 			registerHabitCounter(el, this.dbService);
@@ -73,18 +75,19 @@ export default class SQLiteDBPlugin extends Plugin {
 			}
 		);
 
-		this.registerMarkdownCodeBlockProcessor(
-			"date-picker",
-			async (source: string, el: HTMLElement) => {
-				renderDatePicker(el, this.app);
-			}
-		);
+        this.registerMarkdownCodeBlockProcessor(
+            "date-header",
+            (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+                ctx.addChild(new DateNavigatorRenderer(el, this.app));
+
+            }
+        );
 
 		this.addSettingTab(new SQLiteDBSettingTab(this.app, this));
 	}
 
 	onunload() {
-		console.log("Unloading SQLiteDBPlugin...");
+		removeDateNavigatorStyles();
 	}
 
 	private async openDatabase(forceReload = true) {

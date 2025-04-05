@@ -12,6 +12,7 @@ import {
     clearComponentErrorState,
     HabitCounterUIElements
 } from "./dom/uiUpdaters";
+import { DATE_CHANGED_EVENT_NAME, pluginState } from "../../pluginState";
 
 //? Main Web Component class, acts as an orchestrator.
 export class HabitCounter extends HTMLElement {
@@ -36,6 +37,8 @@ export class HabitCounter extends HTMLElement {
         wrapper: null, valueDisplay: null, labelElement: null, minusButton: null, plusButton: null
     };
 
+    private _isListeningForDateChanges: boolean = false; // Prevent multiple listeners
+
     // --- Lifecycle ---
     connectedCallback() {
         if (this._isInitialized) return;
@@ -48,7 +51,13 @@ export class HabitCounter extends HTMLElement {
 
         this.uiElements = buildHabitCounterDOM(this.attachShadow({ mode: "open" }), handlers); //~ Build DOM via helper
         applyHabitCounterStyles(this.shadowRoot!); //~ Apply styles via helper
+        this._setupDateChangeListener(); //^ Call setup listener
         this._isInitialized = true;
+    }
+
+    disconnectedCallback() {
+        document.removeEventListener(DATE_CHANGED_EVENT_NAME, this._handleGlobalDateChange);
+        this._isListeningForDateChanges = false;
     }
 
     // --- Public Methods ---
@@ -97,6 +106,32 @@ export class HabitCounter extends HTMLElement {
             }
         });
     }
+
+    private _setupDateChangeListener(): void {
+        //? Only add listener if component uses dynamic date and not already listening
+        if (this.getAttribute("date") === "@date" && !this._isListeningForDateChanges) {
+            document.addEventListener(DATE_CHANGED_EVENT_NAME, this._handleGlobalDateChange);
+            this._isListeningForDateChanges = true;
+        } else {
+            //& console.log(`[HabitCounter Component ${this.habitKey}] Not adding listener (date=${this.getAttribute("date")}, listening=${this._isListeningForDateChanges})`);
+        }
+    }
+
+    private _handleGlobalDateChange = (event: Event): void => {
+        //? Type guard for CustomEvent
+        if (!(event instanceof CustomEvent)) return;
+
+        const newIsoDate = event.detail?.newIsoDate;
+
+        //? Double-check this component should react (uses @date)
+        if (this.initialDate === "@date") {
+
+            //? Reload data using the same helper
+            loadHabitData(this).catch(err => {
+                console.error(`[HabitCounter Component ${this.habitKey}] Error reloading data after date change:`, err);
+            });
+        }
+    };
 
     //? Public method called by click handlers via instance reference
     public async _updateData(delta: number): Promise<void> {

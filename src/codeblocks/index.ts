@@ -1,5 +1,5 @@
 import { processSqlBlock } from "./processSqlBlock";
 import { processSqlChartBlock } from "./processSqlChartBlock";
-import { renderDatePicker } from "./datePicker";
+import { DateNavigatorRenderer } from "./dateHeader";
 
-export { processSqlBlock, processSqlChartBlock, renderDatePicker };
+export { processSqlBlock, processSqlChartBlock, DateNavigatorRenderer };

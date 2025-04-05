@@ -33,24 +33,19 @@ export class DBService {
         // Only reload if forced or not already loaded
         if (!this.db || forceReload) {
             try {
-                console.log("DBService: Initializing SQL.js and loading DB...");
                 this.SQL = await initSqlJs({
                     locateFile: (file) => `${basePath}/${this.app.vault.configDir}/plugins/sqlite-db/${file}`,
                 });
 
-                console.log(`DBService: Reading DB file from: ${settings.dbFilePath}`);
                 const fileBuffer = readFileSync(settings.dbFilePath);
                 this.db = new this.SQL.Database(fileBuffer);
-                console.log("DBService: Database loaded into memory.");
 
                 // Check if we have at least one table
                 const result = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' LIMIT 1;");
                 if (result?.[0]?.values?.[0]?.[0]) {
                     new Notice(`DB Loaded.`);
-                    console.log("DBService: DB Loaded successfully.");
                 } else {
                     new Notice("DB Loaded, but found no tables.");
-                    console.log("DBService: DB Loaded, but found no tables.");
                 }
                 return true; // Indicate success
             } catch (err) {
@@ -61,8 +56,7 @@ export class DBService {
                 return false; // Indicate failure
             }
         } else {
-			console.log("DBService: Database already loaded.");
-			return true; // Already loaded
+            return true; // Already loaded
         }
     }
 
