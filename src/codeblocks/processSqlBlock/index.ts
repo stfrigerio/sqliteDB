@@ -1,5 +1,5 @@
 import { Notice } from "obsidian";
-import { DBService } from "../../dbService";
+import { DBService } from "../../DBService";
 import { parseSqlParams, validateTable, buildSqlQuery, renderResults } from "./helpers";
 import { pluginState } from "../../pluginState";
 

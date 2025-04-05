@@ -1,21 +1,21 @@
 import {
-	App,
 	Plugin,
-	PluginSettingTab,
-	Setting,
 	FileSystemAdapter,
 	Editor,
 	MarkdownView,
 	MarkdownPostProcessorContext
 } from "obsidian";
 
-import { DBService } from "./src/dbService";
+import { DBService } from "./src/DBService";
+import { SQLiteDBSettingTab } from "./src/settingTab";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
 import { processSqlBlock, processSqlChartBlock, renderDatePicker } from "./src/codeblocks";
 import { pickTableName } from "./src/helpers";
 import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
+
 import { injectDatePickerStyles } from "src/styles/datePickerInject";
-import "./src/webcomponents/habitCounter";
+
+import { registerHabitCounter } from "./src/webcomponents/HabitCounter/registerHabitCounter";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
@@ -29,11 +29,14 @@ export default class SQLiteDBPlugin extends Plugin {
 
 		injectDatePickerStyles();
 
+		this.registerMarkdownPostProcessor((el, ctx) => {
+			registerHabitCounter(el, this.dbService);
+		});
+
 		this.addCommand({
 			id: "inspect-table-structure",
 			name: "Inspect table structure",
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
-				// ensure DB is loaded (if not, load)
 				await this.openDatabase();
 				await inspectTableStructure(this.dbService, editor, this.app);
 			},
@@ -106,29 +109,3 @@ export default class SQLiteDBPlugin extends Plugin {
 	}
 }
 
-class SQLiteDBSettingTab extends PluginSettingTab {
-	plugin: SQLiteDBPlugin;
-
-	constructor(app: App, plugin: SQLiteDBPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName("Database file path")
-			.setDesc("Absolute path to the .db file on disk.")
-			.addText((text) =>
-				text
-					.setPlaceholder("/home/user/path/to/your.db")
-					.setValue(this.plugin.settings.dbFilePath)
-					.onChange(async (value) => {
-						this.plugin.settings.dbFilePath = value;
-						await this.plugin.saveSettings();
-					})
-			);
-	}
-}

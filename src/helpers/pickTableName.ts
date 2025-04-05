@@ -1,5 +1,5 @@
 import { App, Notice } from "obsidian";
-import { DBService } from "../dbService";
+import { DBService } from "../DBService";
 import { TablePickerModal } from "../components/TablePickerModal";
 
 /**

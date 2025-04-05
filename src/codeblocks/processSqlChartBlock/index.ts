@@ -1,5 +1,5 @@
 import { Notice } from "obsidian";
-import { DBService } from "../../dbService";
+import { DBService } from "../../DBService";
 import { parseChartParams, validateColumns, buildSqlQuery, processChartData } from "./helpers";
 import { ChartType, createChart } from "./charts";
 import { pluginState } from "../../pluginState";
