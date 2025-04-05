@@ -1,4 +1,3 @@
-// src/webcomponents/registration.ts
 import { DBService } from "../../DBService";
 import { HabitCounter } from "./HabitCounter";
 
@@ -36,7 +35,7 @@ export const registerHabitCounter = (el: HTMLElement, dbService: DBService) => {
             const component = document.createElement("habit-counter") as HabitCounter;
 
             //^ Set attributes that the component will read later
-            component.setAttribute("habit", habitKey); // Set 'habit' attribute
+            component.setAttribute("habit", habitKey);
             component.setAttribute("table", table);
             if (date) component.setAttribute("date", date);
             else component.setAttribute("date", "@date");

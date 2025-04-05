@@ -1,6 +1,6 @@
 //? Expected structure returned by the data service fetch method.
 export interface HabitRecord {
-    value: number;
+    value: number; //? Service should SELECT 'actual_value_col AS value'
 }
 
 //? Base arguments for identifying a habit entry, now includes column names.

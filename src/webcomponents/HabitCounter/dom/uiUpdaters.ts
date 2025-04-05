@@ -9,7 +9,6 @@ export interface HabitCounterUIElements {
 
 /** Updates the text content of the value display. */
 export function updateDisplayValue(elements: HabitCounterUIElements, newValue: number | string): void {
-   //& console.log(`[HabitCounterUI] updateDisplayValue called with: ${newValue}`);
     if (elements.valueDisplay) {
         elements.valueDisplay.textContent = String(newValue);
     } else {
@@ -20,7 +19,6 @@ export function updateDisplayValue(elements: HabitCounterUIElements, newValue: n
 export function updateStaticUI(elements: HabitCounterUIElements, emoji: string, habitKey: string): void {
     if (elements.labelElement) {
         const newLabelText = `${emoji} ${habitKey}:`;
-        console.log(`[HabitCounterUI] DEBUG: Attempting to set label textContent to: "${newLabelText}"`);
         elements.labelElement.textContent = newLabelText;
     } else {
         console.error("[HabitCounterUI] updateStaticUI: labelElement was null.");
@@ -35,7 +33,6 @@ export function updateStaticUI(elements: HabitCounterUIElements, emoji: string, 
 
 /** Sets the component to visually indicate an error state. */
 export function setComponentErrorState(elements: HabitCounterUIElements, message: string = "Error"): void {
-    //& console.warn(`[HabitCounterUI] setComponentErrorState called with message: "${message}"`);
     updateDisplayValue(elements, "ERR");
     if (elements.wrapper) {
         elements.wrapper.style.borderColor = "var(--text-error)";
@@ -46,7 +43,6 @@ export function setComponentErrorState(elements: HabitCounterUIElements, message
 
 /** Clears any visual error indication. */
 export function clearComponentErrorState(elements: HabitCounterUIElements): void {
-    //& console.log(`[HabitCounterUI] clearComponentErrorState called.`);
     //? Only reset if actually in error state (check border color)
     if (elements.wrapper && elements.wrapper.style.borderColor !== "transparent") {
         elements.wrapper.style.borderColor = "transparent";

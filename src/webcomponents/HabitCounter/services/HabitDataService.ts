@@ -3,6 +3,8 @@ import { HabitRecord, HabitDataArgs, UpdateHabitDataArgs } from "../HabitCounter
 import { quoteSqlIdentifier } from "./utils/quoteSqlIdentifier";
 import { validateFetchArgs, validateUpdateArgs } from "./utils/validateHabitArgs";
 
+interface UuidResult { uuid: string; }
+
 export class HabitDataService {
     private dbService: DBService;
 
@@ -48,15 +50,27 @@ export class HabitDataService {
             const safeValueCol = quoteSqlIdentifier(args.valueCol);
             const safeDateCol = quoteSqlIdentifier(args.dateCol);
 
-            //^ Use specified columns in INSERT, ON CONFLICT target, and UPDATE SET
-            const sql = `
-                INSERT INTO ${safeTable} (${safeHabitIdCol}, ${safeDateCol}, ${safeValueCol}) VALUES (?, ?, ?)
-                ON CONFLICT(${safeHabitIdCol}, ${safeDateCol}) DO UPDATE SET ${safeValueCol} = excluded.${safeValueCol};
-            `;
-            //! Requires UNIQUE constraint on the specified (habitIdCol, dateCol)
-            const params = [args.habitKey, args.date, args.newValue];
+            //? Attempt to fetch existing UUID
+            const fetchUuidSql = `SELECT uuid FROM ${safeTable} WHERE ${safeHabitIdCol} = ? AND ${safeDateCol} = ?`;
+            const fetchUuidParams = [args.habitKey, args.date];
+            const uuidResult = await this.dbService.getQuery<UuidResult>(fetchUuidSql, fetchUuidParams);
+            const existingUuid = uuidResult?.[0]?.uuid;
 
-            await this.dbService.runQuery(sql, params);
+
+            if (existingUuid && typeof existingUuid === 'string') {
+                const updateSql = `UPDATE ${safeTable} SET ${safeValueCol} = ? WHERE uuid = ?`;
+                const updateParams = [args.newValue, existingUuid];
+                await this.dbService.runQuery(updateSql, updateParams);
+            } else {
+                //^ Use specified columns in INSERT, ON CONFLICT target, and UPDATE SET without uuid
+                const sql = `
+                    INSERT INTO ${safeTable} (${safeHabitIdCol}, ${safeDateCol}, ${safeValueCol}) VALUES (?, ?, ?)
+                    ON CONFLICT(${safeHabitIdCol}, ${safeDateCol}) DO UPDATE SET ${safeValueCol} = excluded.${safeValueCol};
+                `;
+                //! Requires UNIQUE constraint on the specified (habitIdCol, dateCol)
+                const params = [args.habitKey, args.date, args.newValue];
+                await this.dbService.runQuery(sql, params);
+            }
 
         } catch (error) {
             console.error(`[HabitDataService] Error in updateHabitValue for ${args.habitKey}:`, error);
