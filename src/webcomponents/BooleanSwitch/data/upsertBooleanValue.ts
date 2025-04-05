@@ -43,7 +43,5 @@ export async function upsertBooleanValue(instance: UpsertBooleanComponentInstanc
         console.error(`[UpsertBooleanValue ${instance.habitKey}] Failed to upsert data:`, error);
         instance.showErrorState("Save Error - DB");
         new Notice(`Error saving switch state for ${instance.habitKey}`);
-        //? Optional: Revert display on error?
-        // instance._updateDisplay(instance.currentValue);
     }
 }
