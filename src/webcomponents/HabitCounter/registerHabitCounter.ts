@@ -1,4 +1,5 @@
-import { DBService } from "../../DBService";
+// import { DBService } from "../../DBService";
+import { RemoteDBService } from "src/RemoteDBService";
 import { HabitCounter } from "./HabitCounter";
 
 //? Define element if needed here or ensure it's defined elsewhere before this runs
@@ -11,7 +12,7 @@ if (!customElements.get("habit-counter")) {
  * @param el The container element to search within.
  * @param dbService The DBService instance for dependency injection.
  */
-export const registerHabitCounter = (el: HTMLElement, dbService: DBService) => {
+export const registerHabitCounter = (el: HTMLElement, dbService: RemoteDBService) => {
     const placeholders = el.querySelectorAll("span.habit-counter-placeholder");
 
     placeholders.forEach((placeholderEl) => { //~ Removed index as it wasn't used

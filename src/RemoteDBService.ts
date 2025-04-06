@@ -1,5 +1,7 @@
 export class RemoteDBService {
-	constructor(private apiBaseUrl: string) {}
+	constructor(
+		private apiBaseUrl: string,
+	) {}
 
 	async getQuery<T extends Record<string, any>>(sql: string, params: any[] = []): Promise<T[]> {
 		const res = await fetch(`${this.apiBaseUrl}/query`, {

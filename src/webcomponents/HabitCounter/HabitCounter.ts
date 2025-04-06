@@ -1,4 +1,5 @@
-import { DBService } from "../../DBService";
+// import { DBService } from "../../DBService";
+import { RemoteDBService } from "src/RemoteDBService";
 import { HabitDataService } from "../services/HabitDataService";
 import { applyHabitCounterStyles } from "./styles/applyHabitCounterStyles";
 import { buildHabitCounterDOM } from "./dom/buildHabitCounterDOM";
@@ -59,7 +60,7 @@ export class HabitCounter extends HTMLElement {
     }
 
     // --- Public Methods ---
-    public setDbService(service: DBService): void {
+    public setDbService(service: RemoteDBService): void {
         if (!service) {
             console.error("[HabitCounter Component] Invalid DBService provided.");
             this.showErrorState("Setup Error"); //~ Use helper

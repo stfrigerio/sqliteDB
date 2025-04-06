@@ -7,6 +7,7 @@ import {
 } from "obsidian";
 
 import { DBService } from "./src/DBService";
+import { RemoteDBService } from "src/RemoteDBService";
 import { SQLiteDBSettingTab } from "./src/settingTab";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
 import { processSqlBlock, processSqlChartBlock, DateNavigatorRenderer } from "./src/codeblocks";
@@ -22,11 +23,13 @@ import { registerBooleanSwitch } from "src/webcomponents/BooleanSwitch/registerB
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
 	private dbService: DBService;
-
+	private remoteDBService: RemoteDBService;
+	
 	async onload() {
 		// init
 		await this.loadSettings();
 		this.dbService = new DBService(this.app);
+		this.remoteDBService = new RemoteDBService('http://100.92.2.10:3000');
 		await this.openDatabase();
 
 		injectDatePickerStyles();
@@ -34,7 +37,7 @@ export default class SQLiteDBPlugin extends Plugin {
 
 		//? Components
 		this.registerMarkdownPostProcessor((el, ctx) => {
-			registerHabitCounter(el, this.dbService);
+			registerHabitCounter(el, this.remoteDBService);
 			registerBooleanSwitch(el, this.dbService);
 		});
 
