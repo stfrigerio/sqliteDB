@@ -12,18 +12,41 @@ export class SQLiteDBSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-
+	
 		new Setting(containerEl)
-			.setName("Database file path")
-			.setDesc("Absolute path to the .db file on disk.")
-			.addText((text) =>
+			.setName("Database mode")
+			.setDesc("Choose between local file or remote API")
+			.addDropdown(drop => drop
+				.addOptions({ local: "Local", remote: "Remote" })
+				.setValue(this.plugin.settings.mode)
+				.onChange(async (value) => {
+					this.plugin.settings.mode = value as "local" | "remote";
+					await this.plugin.saveSettings();
+				}));
+	
+		new Setting(containerEl)
+			.setName("Database file path (local mode)")
+			.setDesc("Absolute path to your local SQLite .db file")
+			.addText(text =>
 				text
-					.setPlaceholder("/home/user/path/to/your.db")
+					.setPlaceholder("/home/user/file.db")
 					.setValue(this.plugin.settings.dbFilePath)
 					.onChange(async (value) => {
 						this.plugin.settings.dbFilePath = value;
 						await this.plugin.saveSettings();
-					})
-			);
+					}));
+	
+		new Setting(containerEl)
+			.setName("API base URL (remote mode)")
+			.setDesc("Full base URL to your remote API (e.g., http://localhost:3000/api)")
+			.addText(text =>
+				text
+					.setPlaceholder("http://localhost:3000/api")
+					.setValue(this.plugin.settings.apiBaseUrl)
+					.onChange(async (value) => {
+						this.plugin.settings.apiBaseUrl = value;
+						await this.plugin.saveSettings();
+					}));
 	}
+	
 }

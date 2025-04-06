@@ -5,11 +5,13 @@ import { writeFile } from "fs/promises";
 import { SQLiteDBSettings } from "./types";
 
 export class DBService {
+    private mode: "local" | "remote" = "local";
     private db: Database | null = null;
     private SQL: SqlJsStatic | null = null; // We still need to store the initialized library instance
     private app: App;
     private settings: SQLiteDBSettings | null = null; // Store settings for saving path
     private basePath: string = "";
+	private apiBaseUrl: string = "";
 
     constructor(app: App) {
         this.app = app;
@@ -24,11 +26,21 @@ export class DBService {
     async ensureDBLoaded(settings: SQLiteDBSettings, basePath: string, forceReload = false): Promise<boolean> { // Added return type promise
         this.settings = settings;
         this.basePath = basePath;
+		this.mode = settings.mode ?? "local";
 
-        if (!settings.dbFilePath) {
-            new Notice("No DB path set in plugin settings.");
-            return false;
-        }
+        if (this.mode === "remote") {
+			if (!settings.apiBaseUrl) {
+				new Notice("Remote mode selected, but no API base URL configured.");
+				return false;
+			}
+			this.apiBaseUrl = settings.apiBaseUrl;
+			return true;
+		}
+
+		if (!settings.dbFilePath) {
+			new Notice("No local DB path set in plugin settings.");
+			return false;
+		}
 
         // Only reload if forced or not already loaded
         if (!this.db || forceReload) {
@@ -74,30 +86,32 @@ export class DBService {
      * @param params Array of parameters to bind to placeholders
      * @returns Promise resolving to an array of result objects
      */
-    async getQuery<T extends Record<string, any>>(sql: string, params: any[] = []): Promise<T[]> {
-        if (!this.db) {
-            console.error("DBService.getQuery: Database is not loaded.");
-            throw new Error("Database not loaded.");
-        }
+	async getQuery<T extends Record<string, any>>(sql: string, params: any[] = []): Promise<T[]> {
+		if (this.mode === "remote") {
+			const res = await fetch(`${this.apiBaseUrl}/query`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ sql, params }),
+			});
+			if (!res.ok) throw new Error(await res.text());
+			return await res.json();
+		}
 
-        let stmt: Statement | null = null;
-        try {
-            stmt = this.db.prepare(sql);
-            stmt.bind(params);
-            const results: T[] = [];
-            while (stmt.step()) {
-                results.push(stmt.getAsObject() as T);
-            }
-            return results;
-        } catch (error) {
-            console.error(`DBService.getQuery: Error executing SQL: ${sql}`, params, error);
-            throw error; // Re-throw
-        } finally {
-            if (stmt) {
-                try { stmt.free(); } catch (freeError) { console.error("DBService.getQuery: Error freeing statement:", freeError); }
-            }
-        }
-    }
+		if (!this.db) throw new Error("Database not loaded (local mode).");
+
+		let stmt: Statement | null = null;
+		try {
+			stmt = this.db.prepare(sql);
+			stmt.bind(params);
+			const results: T[] = [];
+			while (stmt.step()) {
+				results.push(stmt.getAsObject() as T);
+			}
+			return results;
+		} finally {
+			if (stmt) stmt.free();
+		}
+	}
 
     /**
      * Executes a query that does not return rows (e.g., INSERT, UPDATE, DELETE).
@@ -107,29 +121,29 @@ export class DBService {
      * @param params Array of parameters to bind to placeholders
      * @returns Promise resolving when execution and save are complete
      */
-    async runQuery(sql: string, params: any[] = []): Promise<void> {
-        if (!this.db) {
-            console.error("DBService.runQuery: Database is not loaded.");
-            throw new Error("Database not loaded.");
-        }
+	async runQuery(sql: string, params: any[] = []): Promise<void> {
+		if (this.mode === "remote") {
+			const res = await fetch(`${this.apiBaseUrl}/execute`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ sql, params }),
+			});
+			if (!res.ok) throw new Error(await res.text());
+			return;
+		}
 
-        let stmt: Statement | null = null;
-        try {
-            stmt = this.db.prepare(sql);
-            stmt.bind(params);
-            stmt.run();
+		if (!this.db) throw new Error("Database not loaded (local mode).");
 
-            await this._saveDBInternal();
-
-        } catch (error) {
-            console.error(`DBService.runQuery: Error executing SQL: ${sql}`, params, error);
-            throw error;
-        } finally {
-			if (stmt) {
-                try { stmt.free(); } catch (freeError) { console.error("DBService.runQuery: Error freeing statement:", freeError); }
-            }
-        }
-    }
+		let stmt: Statement | null = null;
+		try {
+			stmt = this.db.prepare(sql);
+			stmt.bind(params);
+			stmt.run();
+			await this._saveDBInternal();
+		} finally {
+			if (stmt) stmt.free();
+		}
+	}
 
     /**
      * Internal method to save the current in-memory database back to the file.

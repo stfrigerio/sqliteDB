@@ -7,7 +7,6 @@ import {
 } from "obsidian";
 
 import { DBService } from "./src/DBService";
-import { RemoteDBService } from "src/RemoteDBService";
 import { SQLiteDBSettingTab } from "./src/settingTab";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
 import { processSqlBlock, processSqlChartBlock, DateNavigatorRenderer } from "./src/codeblocks";
@@ -23,13 +22,11 @@ import { registerBooleanSwitch } from "src/webcomponents/BooleanSwitch/registerB
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
 	private dbService: DBService;
-	private remoteDBService: RemoteDBService;
 	
 	async onload() {
 		// init
 		await this.loadSettings();
 		this.dbService = new DBService(this.app);
-		this.remoteDBService = new RemoteDBService('http://100.92.2.10:3000');
 		await this.openDatabase();
 
 		injectDatePickerStyles();
@@ -37,7 +34,7 @@ export default class SQLiteDBPlugin extends Plugin {
 
 		//? Components
 		this.registerMarkdownPostProcessor((el, ctx) => {
-			registerHabitCounter(el, this.remoteDBService);
+			registerHabitCounter(el, this.dbService);
 			registerBooleanSwitch(el, this.dbService);
 		});
 
@@ -46,7 +43,6 @@ export default class SQLiteDBPlugin extends Plugin {
 			id: "inspect-table-structure",
 			name: "Inspect table structure",
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
-				await this.openDatabase();
 				await inspectTableStructure(this.dbService, editor, this.app);
 			},
 		});
@@ -54,9 +50,7 @@ export default class SQLiteDBPlugin extends Plugin {
 		this.addCommand({
 			id: "dump-table-to-notes",
 			name: "Dump table to notes",
-			callback: async () => {
-				await this.openDatabase();
-			
+			callback: async () => {			
 				// 1) pick a table
 				const chosenTable = await pickTableName(this.dbService, this.app);
 				if (!chosenTable) {
@@ -101,15 +95,19 @@ export default class SQLiteDBPlugin extends Plugin {
 	private async openDatabase(forceReload = true) {
 		const adapter = this.app.vault.adapter;
 		let basePath: string;
-		
+	
 		if (adapter instanceof FileSystemAdapter) {
 			basePath = adapter.getBasePath();
 		} else {
 			basePath = (adapter as any).getFullPath("");
 		}
-		
-		await this.dbService.ensureDBLoaded(this.settings, basePath, forceReload);
-	}
+	
+		if (this.settings.mode === "local") {
+			await this.dbService.ensureDBLoaded(this.settings, basePath, forceReload);
+		} else {
+			await this.dbService.ensureDBLoaded(this.settings, basePath, false);
+		}
+	}	
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());

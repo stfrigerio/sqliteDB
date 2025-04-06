@@ -1,13 +1,12 @@
-import { RemoteDBService } from "src/RemoteDBService";
 import { DBService } from "../../DBService";
 import { HabitRecord, HabitDataArgs, UpdateHabitDataArgs } from "../HabitCounter/HabitCounter.types";
 import { quoteSqlIdentifier } from "./utils/quoteSqlIdentifier";
 import { validateFetchArgs, validateUpdateArgs } from "./utils/validateHabitArgs";
 
 export class HabitDataService {
-    private dbService: RemoteDBService;
+    private dbService: DBService;
 
-    constructor(dbService: RemoteDBService) {
+    constructor(dbService: DBService) {
         if (!dbService) throw new Error("HabitDataService requires a valid DBService instance.");
         this.dbService = dbService;
     }
