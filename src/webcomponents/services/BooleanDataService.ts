@@ -43,9 +43,9 @@ export class BooleanSwitchDataService {
             const safeHabitIdCol = quoteSqlIdentifier(args.habitIdCol);
             const safeValueCol = quoteSqlIdentifier(args.valueCol);
             const safeDateCol = quoteSqlIdentifier(args.dateCol);
+            const updatedAtCol = quoteSqlIdentifier("updatedAt"); //! 🔒 Hardcoded
 
-            let sql = "";
-            let params: (string | number)[] = [];
+            const now = new Date().toISOString(); //~ Current timestamp for updatedAt
 
             let existingUuid: string | undefined;
 
@@ -65,21 +65,20 @@ export class BooleanSwitchDataService {
             }
 
             if (existingUuid) {
-                sql = `UPDATE ${safeTable} SET ${safeValueCol} = ? WHERE uuid = ?`;
-                params = [args.newValue, existingUuid];
+                const updateSql = `UPDATE ${safeTable} SET ${safeValueCol} = ?, ${updatedAtCol} = ? WHERE uuid = ?`;
+                const updateParams = [args.newValue, now, existingUuid];
+                await this.dbService.runQuery(updateSql, updateParams);
             } else {
-                // Standard UPSERT path (no UUID column configured)
-                sql = `
-                    INSERT INTO ${safeTable} (${safeHabitIdCol}, ${safeDateCol}, ${safeValueCol})
-                    VALUES (?, ?, ?)
+                const insertSql = `
+                    INSERT INTO ${safeTable} (${safeHabitIdCol}, ${safeDateCol}, ${safeValueCol}, ${updatedAtCol})
+                    VALUES (?, ?, ?, ?)
                     ON CONFLICT(${safeHabitIdCol}, ${safeDateCol}) DO UPDATE
-                    SET ${safeValueCol} = excluded.${safeValueCol};
+                    SET ${safeValueCol} = excluded.${safeValueCol},
+                        ${updatedAtCol} = excluded.${updatedAtCol};
                 `;
-                //! Requires UNIQUE constraint on (keyIdCol, dateCol)
-                params = [args.habitKey, args.date, args.newValue];
+                const insertParams = [args.habitKey, args.date, args.newValue, now];
+                await this.dbService.runQuery(insertSql, insertParams);
             }
-
-            await this.dbService.runQuery(sql, params);
 
         } catch (error) { 
             console.error(`[BoolDataService] Error in upsertBooleanValue for ${args.habitKey}:`, error);

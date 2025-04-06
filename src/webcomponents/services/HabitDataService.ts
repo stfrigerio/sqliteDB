@@ -47,6 +47,9 @@ export class HabitDataService {
             const safeHabitIdCol = quoteSqlIdentifier(args.habitIdCol);
             const safeValueCol = quoteSqlIdentifier(args.valueCol);
             const safeDateCol = quoteSqlIdentifier(args.dateCol);
+            const updatedAtCol = quoteSqlIdentifier("updatedAt"); //! 🔒 Hardcoded
+
+            const now = new Date().toISOString(); //~ Current timestamp for updatedAt
 
             let existingUuid: string | undefined;
 
@@ -58,29 +61,28 @@ export class HabitDataService {
                 existingUuid = uuidResult?.[0]?.uuid;
             } catch (error) {
                 if (error instanceof Error && /no such column|does not exist/i.test(error.message) && error.message.includes('uuid')) {
-                    //^ It's expected that 'uuid' might not exist. Log for info and proceed without UUID.
                     console.log(`[HabitDataService] Info: Optional 'uuid' column not found in table '${args.table}'. Proceeding with standard upsert.`);
                     existingUuid = undefined; // Ensure it's undefined so the INSERT path is taken
                 } else {
-                    //^ A different, unexpected error occurred during the UUID fetch, re-throw it.
                     console.error(`[HabitDataService] Error fetching potential UUID for ${args.habitKey} on ${args.date}:`, error);
                     throw error; // Re-throw unexpected errors
                 }
             }
 
             if (existingUuid && typeof existingUuid === 'string') {
-                const updateSql = `UPDATE ${safeTable} SET ${safeValueCol} = ? WHERE uuid = ?`;
-                const updateParams = [args.newValue, existingUuid];
+                const updateSql = `UPDATE ${safeTable} SET ${safeValueCol} = ?, ${updatedAtCol} = ? WHERE uuid = ?`;
+                const updateParams = [args.newValue, now, existingUuid];
                 await this.dbService.runQuery(updateSql, updateParams);
             } else {
-                //^ Use specified columns in INSERT, ON CONFLICT target, and UPDATE SET without uuid
-                const sql = `
-                    INSERT INTO ${safeTable} (${safeHabitIdCol}, ${safeDateCol}, ${safeValueCol}) VALUES (?, ?, ?)
-                    ON CONFLICT(${safeHabitIdCol}, ${safeDateCol}) DO UPDATE SET ${safeValueCol} = excluded.${safeValueCol};
+                const insertSql = `
+                    INSERT INTO ${safeTable} (${safeHabitIdCol}, ${safeDateCol}, ${safeValueCol}, ${updatedAtCol})
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(${safeHabitIdCol}, ${safeDateCol}) DO UPDATE SET
+                        ${safeValueCol} = excluded.${safeValueCol},
+                        ${updatedAtCol} = excluded.${updatedAtCol};
                 `;
-                //! Requires UNIQUE constraint on the specified (habitIdCol, dateCol)
-                const params = [args.habitKey, args.date, args.newValue];
-                await this.dbService.runQuery(sql, params);
+                const insertParams = [args.habitKey, args.date, args.newValue, now];
+                await this.dbService.runQuery(insertSql, insertParams);
             }
 
         } catch (error) {
