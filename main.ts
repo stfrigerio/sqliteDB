@@ -18,6 +18,7 @@ import { injectDateNavigatorStyles, removeDateNavigatorStyles } from './src/styl
 
 import { registerHabitCounter } from "./src/webcomponents/HabitCounter/registerHabitCounter";
 import { registerBooleanSwitch } from "src/webcomponents/BooleanSwitch/registerBooleanSwitch";
+import { registerTextInput } from "src/webcomponents/TextInput/registerTextInput";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
@@ -36,6 +37,7 @@ export default class SQLiteDBPlugin extends Plugin {
 		this.registerMarkdownPostProcessor((el, ctx) => {
 			registerHabitCounter(el, this.dbService);
 			registerBooleanSwitch(el, this.dbService);
+			registerTextInput(el, this.app, this.dbService);
 		});
 
 		//? Commands
