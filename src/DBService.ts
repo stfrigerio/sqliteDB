@@ -5,7 +5,7 @@ import { writeFile } from "fs/promises";
 import { SQLiteDBSettings } from "./types";
 
 export class DBService {
-    private mode: "local" | "remote" = "local";
+    public mode: "local" | "remote" = "local";
     private db: Database | null = null;
     private SQL: SqlJsStatic | null = null; // We still need to store the initialized library instance
     private app: App;
