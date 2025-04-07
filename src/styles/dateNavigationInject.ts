@@ -13,27 +13,47 @@ function getDateNavigatorStyles(): string {
 
         .${NAVIGATOR_CONTAINER_WRAPPER_CLASS} .date-navigator-wrapper {
             display: flex;
-            flex-direction: column; /* Stack nav row and button vertically */
+            flex-direction: column;
             align-items: center;
-            gap: var(--size-4-2); /* Space between nav row and button */
+            gap: var(--size-4-2);
         }
 
         .${NAVIGATOR_CONTAINER_WRAPPER_CLASS} .date-nav-row {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: var(--size-4-3);
+            gap: 2rem;
             width: 100%;
+        }
+
+        .${NAVIGATOR_CONTAINER_WRAPPER_CLASS} .date-nav-button {
+            font-size: 2.5rem;
+            width: 3rem;
+            height: 3rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-normal);
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+
+        .${NAVIGATOR_CONTAINER_WRAPPER_CLASS} .date-nav-button:hover {
+            color: var(--text-accent);
+            transform: scale(1.2);
         }
 
         .${NAVIGATOR_CONTAINER_WRAPPER_CLASS} h1.date-navigator-display {
             margin: 0;
             text-align: center;
-            flex-grow: 1;
             font-size: var(--font-heading-1);
-            color: var(--text-error);
+            color: var(--text-normal);
             white-space: nowrap;
             min-width: 15ch;
+            padding: 0 1rem;
         }
     `;
 }

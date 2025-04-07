@@ -1,7 +1,11 @@
 import { DBService } from "src/DBService";
-import { TextRecord, TextDataArgs, UpsertTextArgs } from "../TextInput/TextInput.types";
+import { TextDataArgs, UpsertTextArgs } from "../TextInput/TextInput.types";
 import { quoteSqlIdentifier } from "./utils/quoteSqlIdentifier";
 import { validateBaseTextArgs, validateUpsertTextArgs } from "./utils/validateTextInputArgs";
+
+interface RawTextRecord {
+    value: string | number | null;
+}
 
 export class TextInputDataService {
     private dbService: DBService;
@@ -10,7 +14,7 @@ export class TextInputDataService {
         this.dbService = dbService;
     }
 
-    /** //? Fetches the current text value for a specific key/date. Returns empty string if not found. */
+    /** Fetches the current text value for a specific key/date. Returns empty string if not found. */
     async fetchTextValue(args: TextDataArgs): Promise<string> {
         try {
             validateBaseTextArgs(args);
@@ -21,10 +25,15 @@ export class TextInputDataService {
             const sql = `SELECT ${safeValueCol} AS value FROM ${safeTable} WHERE ${safeDateCol} = ?`;
             const params = [args.date];
 
-            const result = await this.dbService.getQuery<TextRecord>(sql, params);
+            const result = await this.dbService.getQuery<RawTextRecord>(sql, params);
             const value = result?.[0]?.value;
-            //? Return fetched string or empty string if null/undefined/not found
-            return typeof value === 'string' ? value : "";
+
+            if (value !== null && value !== undefined) {
+                const stringValue = String(value); // Convert number or string using String()
+                return stringValue;
+            } else {
+                return ""; // Return empty string for null/undefined/not found
+            }
 
         } catch (error) {
             console.error(`[TextInputDataService] Error in fetchTextValue for ${args.table}:`, error);
@@ -32,7 +41,7 @@ export class TextInputDataService {
         }
     }
 
-    /** //? Upserts the text value. Handles optional UUID column logic. */
+    /** Upserts the text value. Handles optional UUID column logic. */
     async upsertTextValue(args: UpsertTextArgs): Promise<void> {
         try {
             validateUpsertTextArgs(args);
