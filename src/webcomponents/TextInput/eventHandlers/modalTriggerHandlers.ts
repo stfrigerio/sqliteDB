@@ -1,34 +1,41 @@
-import type { TextInputEventProps } from "../TextInput.types";
-import { TimePickerModal } from "../../../components/TimePickerModal";
-import { DatePickerModal } from "../../../codeblocks/dateHeader/components/datePicker/DatePickerModal";
+import type { TextInput } from "../TextInput";
+import { DatePickerModal } from "src/components/DatePickerModal/DatePickerModal";
+import { TimePickerModal } from "src/components/TimePickerModal/TimePickerModal";
 
 export type ModalTriggerHandler = (event: MouseEvent) => void;
 
 /** //? Creates the handler for the modal trigger element's 'click' event. */
-export function createModalTriggerHandler(props: TextInputEventProps): ModalTriggerHandler { // Use renamed type
+//^ Accept the component instance 'this' instead of props object
+export function createModalTriggerHandler(instance: TextInput): ModalTriggerHandler {
     return (event: MouseEvent) => {
-        // No debug log needed at start
+        const modalType = instance.config.modalType; // Get current modalType from config
+        const app = instance.appInstance; // Get app instance
+        const currentValue = instance.currentValue; // Get current value
+        const label = instance.config.label; // Get label for logging
 
-        switch (props.modalType) {
+        if (!app) {
+            console.error(`[ModalTriggerHandler ${label}] Cannot open modal: App instance is missing.`);
+            return;
+        }
+
+        switch (modalType) {
             case 'time-picker':
-                new TimePickerModal(props.app, props.currentValue, (selectedTime: string) => {
-                    props.setValue(selectedTime, true);
+                new TimePickerModal(app, currentValue, (selectedTime: string) => {
+                    //? Use component's method to set value
+                    instance._setValue(selectedTime, true);
                 }).open();
                 break;
 
             case 'date-picker':
-                const initialDate = props.currentValue || new Date().toISOString().split('T')[0];
-                new DatePickerModal(props.app, initialDate, (selectedDate: string) => {
-                    props.setValue(selectedDate, true);
+                const initialDate = currentValue || new Date().toISOString().split('T')[0];
+                new DatePickerModal(app, initialDate, (selectedDate: string) => {
+                    instance._setValue(selectedDate, true);
                 }).open();
                 break;
 
-            // todo: Add cases for 'list-select', 'custom', etc.
-
             case 'none':
             default:
-                // Do nothing or console.warn if unexpected click
-                // console.warn(`[ModalTriggerHandler ${props.label}] Clicked trigger but modalType is '${props.modalType}'.`);
+                console.warn(`[ModalTriggerHandler ${label}] Clicked trigger but modalType is '${modalType}'.`);
                 break;
         }
     };

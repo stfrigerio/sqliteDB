@@ -1,6 +1,6 @@
 import { MarkdownRenderChild, App } from 'obsidian';
 
-import { DateNavigator } from './components/dateNavigator/DateNavigator';
+import { DateNavigator } from './DateNavigator';
 import { pluginState } from '../../pluginState';
 
 /**

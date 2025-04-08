@@ -1,4 +1,4 @@
-import { getISOWeekNumber } from "../datePickerUtils";
+import { getISOWeekNumber } from "src/helpers/dateUtils";
 
 /**
  * Builds the main grid of days for the calendar month.

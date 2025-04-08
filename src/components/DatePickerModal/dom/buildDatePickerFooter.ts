@@ -1,5 +1,4 @@
-// src/components/datePicker/dom/buildDatePickerFooter.ts
-import { formatDateForDisplay } from "../datePickerUtils"; // Use consistent display formatting
+import { formatDateForDisplay } from "src/helpers/dateUtils";
 
 /**
  * Builds the footer section of the date picker modal (Selected Date Display, Confirm Button).

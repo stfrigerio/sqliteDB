@@ -1,13 +1,15 @@
-import type { TextInputEventProps } from "../TextInput.types";
+import type { TextInput } from "../TextInput";
 
 export type InputChangeEventHandler = (event: Event) => void;
 
 /** Creates the handler for the input element's 'change' event. */
-export function createInputChangeHandler(props: TextInputEventProps): InputChangeEventHandler {
+export function createInputChangeHandler(instance: TextInput): InputChangeEventHandler {
     return (event: Event) => {
         if (event.target instanceof HTMLInputElement) {
             const newValue = event.target.value;
-            props.setValue(newValue, true);
+            //? Access component's method directly
+            //? Pass true to trigger save on 'change' event
+            instance._setValue(newValue, true);
         }
     };
 }

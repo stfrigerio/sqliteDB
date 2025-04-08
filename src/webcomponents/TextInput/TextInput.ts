@@ -11,15 +11,20 @@ import { upsertTextValue } from "./data/upsertTextValue";
 import { updateInputValue, setTextErrorState, clearTextErrorState, updateStaticTextUI } from "./dom/textInputUiUpdaters";
 import { DATE_CHANGED_EVENT_NAME } from "src/pluginState";
 
+let textInputCounter = 0;
+
 export class TextInput extends HTMLElement {
     // --- Dependencies ---
-    private appInstance: App | null = null;
+    public appInstance: App | null = null;
     public textDataService: TextInputDataService | null = null;
 
     // --- State & Config ---
     public config: TextInputConfig = {};
     public currentValue: string = "";
     private _isInitialized: boolean = false;
+    private _domBuilt: boolean = false; // Tracks if Shadow DOM exists
+    private _initialLoadTriggered: boolean = false; // Tracks if initial load has been triggered
+
     //^ data related state/config
     public table: string = "";
     public date: string = "";
@@ -28,54 +33,26 @@ export class TextInput extends HTMLElement {
 
     private _isListeningForDateChanges: boolean = false; // Prevent multiple listeners
 
-
     // --- Shadow DOM Elements ---
     private uiElements!: TextInputDOMElements;
+    private uniqueId: string; // For logging/debugging
+
+    constructor() {
+        super();
+        this.uniqueId = `ti-${textInputCounter++}`;
+    }
 
     // --- Lifecycle ---
     connectedCallback() {
+        //& console.log(`[TextInput ${this.uniqueId}] connectedCallback.`);
+        //? We only mark that the element is in the DOM.
+        //? Initialization waits for dependencies via setDependencies.
+        //? Setup listener only after attributes are read.
         if (this._isInitialized) return;
-
-        //~ Initialization logic will be triggered by setDependencies,
-        //~ but we need to build the DOM structure and setup listeners that
-        //~ depend only on attributes right away.
-
-        //~ Create bound event handler (needed by DOM builder if input acts as trigger)
-        const eventProps: TextInputEventProps = { // Partial props okay here? Or defer fully? Let's defer.
-            app: this.appInstance!, // Assume app will be set, riskier
-            uiElements: this.uiElements, // Placeholder
-            currentValue: this.currentValue,
-            setValue: this._setValue,
-            // Config will be filled later
-        };
-
-        const handlers = {
-            handleInputChange: createInputChangeHandler(eventProps), // Needs props later
-            handleModalTrigger: createModalTriggerHandler(eventProps), // Needs props later
-        };
-
-        //? Read config attributes needed *immediately* for DOM build (like isButton, modalType)
-        const initialConfig: TextInputConfig = {
-            modalType: (this.getAttribute("data-modal-type") as ModalType) ?? 'none',
-            isButton: this.getAttribute("data-is-button")?.toLowerCase() === 'true',
-            // Read others needed by buildTextInputDOM, possibly placeholder/initialValueAttr too
-            placeholder: this.getAttribute("placeholder") ?? undefined,
-            initialValueAttr: this.getAttribute("data-initial-value") ?? "",
-            label: this.getAttribute("data-label") ?? undefined,
-        };
-
-
-        //? Build DOM structure immediately
-        this.uiElements = buildTextInputDOM(this.attachShadow({ mode: "open" }), initialConfig, handlers);
-        applyTextInputStyles(this.shadowRoot!);
-
-        //? This reads the attribute directly, safe to call now.
-        this._setupDateChangeListener();
-
-        this._isInitialized = true; // Mark basic init done
     }
 
     disconnectedCallback() {
+        //& console.log(`[TextInput ${this.uniqueId}] disconnectedCallback - Cleaning up listener.`);
         if (this._isListeningForDateChanges) {
             document.removeEventListener(DATE_CHANGED_EVENT_NAME, this._handleGlobalDateChange);
             this._isListeningForDateChanges = false;
@@ -85,66 +62,111 @@ export class TextInput extends HTMLElement {
     // --- Public Methods ---
     /** Injects DBService first, then App instance. */
     public setDependencies(dbService: DBService, app: App): void {
-        if (!dbService || !app) { /* ... error ... */ return; }
+        //& console.log(`[TextInput ${this.uniqueId}] setDependencies called.`);
+        if (this._isInitialized) {
+           //& console.log(`[TextInput ${this.uniqueId}] Already initialized, skipping dependency set.`);
+            return; // Don't re-initialize if already done
+        }
+        if (!dbService || !app) {
+            console.error("[TextInput] Invalid DBService or App instance provided during dependency injection.");
+            this.textContent = "[Init Error - Dependencies]";
+            return;
+        }
         this.appInstance = app;
         try {
             this.textDataService = new TextInputDataService(dbService);
-        } catch (error) { /* ... error ... */ return; }
+        } catch (error) {
+            console.error(`[TextInput ${this.uniqueId}] Failed to initialize TextInputDataService:`, error);
+            this.textContent = "[Data Service Error]";
+            return;
+        }
 
-        //? Now that dependencies are set, complete the setup
-        this._readAttributesAndInitializeData();
+        //? Start the setup process now that dependencies are available
+        this._readAttributesAndBuildConfig(); // Reads attributes, sets 'this.date', setups listener
+        this._initializeComponent();       // Builds DOM, creates handlers, applies styles, triggers load
+        this._isInitialized = true;        // Mark initialization complete
+       //& console.log(`[TextInput ${this.uniqueId}] Initialization fully complete.`);
     }
 
     /** Reads data-related attributes and triggers initial load. Called AFTER dependencies are set. */
-    private _readAttributesAndInitializeData(): void {
-        // --- Read Data Attributes ---
-        this.table = this.getAttribute("data-table") ?? "";
-        this.date = this.getAttribute("data-date") ?? "@date";
-        this.valueCol = this.getAttribute("data-value-col") ?? "";
-        this.dateCol = this.getAttribute("data-date-col") ?? "";
+    private _readAttributesAndBuildConfig(): void {
+         // --- Read ALL Attributes ---
+        this.config = {
+            label: this.getAttribute("data-label") ?? undefined,
+            placeholder: this.getAttribute("placeholder") ?? undefined,
+            initialValueAttr: this.getAttribute("data-initial-value") ?? "",
+            modalType: (this.getAttribute("data-modal-type") as ModalType) ?? 'none',
+            isButton: this.getAttribute("data-is-button")?.toLowerCase() === 'true',
+            table: this.getAttribute("data-table") ?? undefined,
+            date: this.getAttribute("data-date") ?? "@date",
+            valueCol: this.getAttribute("data-value-col") ?? undefined,
+            dateCol: this.getAttribute("data-date-col") ?? undefined,
+        };
+        //? Copy to component properties
+        this.table = this.config.table ?? "";
+        this.date = this.config.date ?? "@date"; // Store initial date config here
+        this.valueCol = this.config.valueCol ?? "";
+        this.dateCol = this.config.dateCol ?? "";
 
-        // --- Update Config object
-        this.config.table = this.table;
-        this.config.date = this.date;
-        this.config.valueCol = this.valueCol;
-        this.config.dateCol = this.dateCol;
+        //^ --- Setup Listener AFTER reading attributes and setting this.date ---
+        this._setupDateChangeListener(); // Safe to call now
+    }
 
-        // --- Trigger Initial Load ---
+    /** Builds DOM, creates handlers, applies styles, triggers initial load. */
+    private _initializeComponent(): void {
+        if (!this.appInstance) { console.error("[TextInput] Cannot initialize component: App instance missing."); return; }
+        if (this.shadowRoot) { console.warn(`[TextInput ${this.config.label || this.uniqueId}] Already has shadowRoot, skipping DOM build.`); return } // Prevent rebuilding DOM
+    
+        //? Pass 'this' which now contains the fully populated config
+        const handlers = {
+            handleInputChange: createInputChangeHandler(this),
+            handleModalTrigger: createModalTriggerHandler(this),
+        };
+    
+        //~ Build DOM and get element references
+        this.uiElements = buildTextInputDOM(this.attachShadow({ mode: "open" }), this.config, handlers);
+
+        //~ Apply styles
+        applyTextInputStyles(this.shadowRoot!); // shadowRoot definitely exists now
+
+        this._domBuilt = true; // Mark DOM built
+
+        // --- Update Static UI & Trigger Initial Load (Deferred slightly) ---
         requestAnimationFrame(() => {
-            updateStaticTextUI(this.uiElements, this.config.label); 
-            if (!this.table || !this.valueCol || !this.dateCol) {
-                console.warn(`[TextInput ${this.config.label}] Missing required data configuration attributes (table, valueCol, dateCol).`);
-                this.showErrorState("Config Error"); this._disableInput?.();
+            updateStaticTextUI(this.uiElements, this.config.label);
+
+            // --- Data Validation & Load Trigger ---
+            if (this.table && this.valueCol && this.dateCol) {
+                // Config looks okay for data operations
+                if (!this._initialLoadTriggered) {
+                    this._initialLoadTriggered = true;
+                    loadTextValue(this).catch(err => console.error(`[TextInput ${this.config.label || this.uniqueId}] Unhandled error during initial load:`, err));
+                }
+            } else {
+                console.warn(`[TextInput ${this.config.label || this.uniqueId}] Missing required data configuration attributes (table, valueCol, dateCol). Will use initialValueAttr.`);
+                this._updateDisplay(this.config.initialValueAttr ?? "");
+                this._disableInput?.();
             }
-            loadTextValue(this).catch(err => console.error(`[TextInput ${this.config.label}] Unhandled error during initial load:`, err));
         });
     }
 
     /** Central method to update state, UI, and trigger save. */
-    private _setValue = (newValue: string, triggerSave: boolean = false): void => {
+    public _setValue = (newValue: string, triggerSave: boolean = false): void => {
         if (this.currentValue !== newValue) {
             this.currentValue = newValue;
-
-            //? Always update the input display
-            this._updateDisplay(this.currentValue);
-
-            this.dispatchEvent(new CustomEvent('input-change', { detail: { value: this.currentValue }, /*...*/ }));
-
-            //? Trigger save only if configured and requested
-            if (triggerSave && this.config.table && this.config.date && this.config.valueCol && this.config.dateCol) {
-                //? Call the upsert helper
-                upsertTextValue(this).catch(err => {
-                    console.error(`[TextInput ${this.config.table}] Error during save:`, err);
-                    //? Consider reverting UI or showing persistent error?
-                    // this.showErrorState("Save Failed");
-                });
+            this._updateDisplay(this.currentValue); // Update UI optimistically
+            this.dispatchEvent(new CustomEvent('input-change', { /* ... */ }));
+            // Use 'this' properties for validation
+            if (triggerSave && this.table && this.valueCol && this.dateCol) {
+               //& console.log(`[TextInput ${this.config.label || this.uniqueId}] Save triggered.`);
+                upsertTextValue(this).catch(/* ... */);
             }
         }
     };
 
+    //? Listener Setup (called from _readAttributesAndBuildConfig)
     private _setupDateChangeListener(): void {
-        const dateAttr = this.getAttribute("data-date"); // Read attribute directly
-        if (dateAttr === "@date" && !this._isListeningForDateChanges) {
+        if (this.date === "@date" && !this._isListeningForDateChanges) {
             document.addEventListener(DATE_CHANGED_EVENT_NAME, this._handleGlobalDateChange);
             this._isListeningForDateChanges = true;
         }

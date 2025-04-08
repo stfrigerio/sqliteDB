@@ -3,7 +3,7 @@ import { buildDatePickerHeader } from "./dom/buildDatePickerHeader";
 import { buildWeekdayHeaders } from "./dom/buildWeekdayHeaders";
 import { buildCalendarGrid } from "./dom/buildCalendarGrid";
 import { buildDatePickerFooter } from "./dom/buildDatePickerFooter";
-import { formatDateISO, parseDateISO } from "./datePickerUtils";
+import { formatDateISO, parseDateISO } from "src/helpers/dateUtils";
 
 export class DatePickerModal extends Modal {
     private selectedDateObj: Date; //? Internal state as Date object

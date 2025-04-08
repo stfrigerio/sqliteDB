@@ -1,8 +1,7 @@
-// src/components/dateNavigator/eventHandlers/dateNavigationHandlers.ts
 import { App } from "obsidian";
-import { DatePickerModal } from "../../datePicker/DatePickerModal";
+import { DatePickerModal } from "src/components/DatePickerModal/DatePickerModal";
 import { PluginState } from "src/pluginState";
-import { parseDateISO, formatDateISO } from "../../datePicker/datePickerUtils";
+import { parseDateISO, formatDateISO } from "src/helpers/dateUtils";
 import { NavigationPeriod } from "../dateNavigator.types";
 
 /** Updates the global plugin state with the new date and triggers necessary updates */
@@ -10,13 +9,10 @@ function updateGlobalDate(newDate: Date, pluginState: PluginState, app: App): vo
     const newIsoDate = formatDateISO(newDate);
     if (pluginState.selectedDate !== newIsoDate) {
         pluginState.selectedDate = newIsoDate;
-        // Optional: Force re-render if needed, maybe make this configurable
-        // app.workspace.getActiveViewOfType(MarkdownView)?.previewMode?.rerender(true);
     }
-    //todo: Could add dispatchEvent here for more reactive updates elsewhere
 }
 
-/** //? Creates the handler for the "previous" button click */
+/** Creates the handler for the "previous" button click */
 export function createPrevHandler(
     pluginState: PluginState,
     period: NavigationPeriod,
@@ -49,7 +45,6 @@ export function createNextHandler(
 ): () => void {
     return () => {
         const currentDate = parseDateISO(pluginState.selectedDate) ?? new Date();
-       //& console.log(`[DateNavHandlers] Next clicked. Current: ${formatDateISO(currentDate)}, Period: ${period}`);
         switch (period) {
             case 'day':
                 currentDate.setUTCDate(currentDate.getUTCDate() + 1);
@@ -72,8 +67,6 @@ export function createOpenModalHandler(
 ): () => void {
     return () => {
         new DatePickerModal(app, pluginState.selectedDate, (newIsoDate) => {
-            //? This is the callback executed when the modal confirms a selection
-            //? No need to call updateGlobalDate here, modal already did via pluginState setter
             updateDisplayCallback(newIsoDate);
         }).open();
     };

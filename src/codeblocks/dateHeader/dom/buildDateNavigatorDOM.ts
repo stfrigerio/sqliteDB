@@ -1,6 +1,5 @@
-// src/components/dateNavigator/dom/buildDateNavigatorDOM.ts
-import { formatDateForDisplay, parseDateISO } from "../../datePicker/datePickerUtils";
-import type { DateNavigatorDOMElements } from "../dateNavigator.types"; // Type only
+import { formatDateForDisplay, parseDateISO } from "src/helpers/dateUtils";
+import type { DateNavigatorDOMElements } from "../dateNavigator.types";
 
 //? Structure for the handlers needed by the builder
 export interface DateNavigatorHandlers {
@@ -15,7 +14,7 @@ export function buildDateNavigatorDOM(
     initialIsoDate: string,
     handlers: DateNavigatorHandlers
 ): DateNavigatorDOMElements {
-    containerEl.empty(); // Clear container first
+    containerEl.empty();
     const wrapper = containerEl.createDiv({ cls: "date-navigator-wrapper" });
     const navRow = wrapper.createDiv({ cls: "date-nav-row" });
 
