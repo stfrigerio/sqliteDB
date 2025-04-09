@@ -1,23 +1,13 @@
 import { DBService } from "../../DBService";
 import { parseChartParams, validateColumns, buildSqlQuery, processChartData } from "./helpers";
 import { ChartType, createChart } from "./charts";
-import { pluginState, DATE_CHANGED_EVENT_NAME } from "../../pluginState";
 import { Notice } from "obsidian";
 
 export async function processSqlChartBlock(dbService: DBService, source: string, el: HTMLElement) {
     await renderChartBlock();
 
-    const onDateChange = async (e: CustomEvent) => {
-		el.empty(); // Clear existing chart or messages
-		await renderChartBlock();
-	};
-
-    document.addEventListener(DATE_CHANGED_EVENT_NAME, onDateChange as EventListener);
-
     async function renderChartBlock() {
-        // replace @date with the selected date
-        const injectedSource = source.replace(/@date/g, pluginState.selectedDate);
-        const config = parseChartParams(injectedSource);
+        const config = parseChartParams(source);
 
         if (!config) {
             // @ts-ignore

@@ -1,18 +1,27 @@
+import { App, MarkdownView } from "obsidian";
 import { NavigationPeriod } from "./codeblocks/dateHeader/dateNavigator.types";
 import { calculatePeriodRange } from "./helpers/datePeriodUtils";
 
 export const DATE_CHANGED_EVENT_NAME = 'plugin-date-changed';
 
 export class PluginState {
+    private app: App | null = null;
+
     private _selectedDate: string; // YYYY-MM-DD (Represents a specific day within the current period)
     private _currentPeriod: NavigationPeriod;
     private _periodStartDate: string; // YYYY-MM-DD
     private _periodEndDate: string;   // YYYY-MM-DD
 
-    constructor(initialDate?: string, initialPeriod: NavigationPeriod = 'day') {
-        // Initialize state, calculating initial range
+    public initialize(app: App, initialDate?: string, initialPeriod: NavigationPeriod = 'day'): void {
+        this.app = app;
         this._currentPeriod = initialPeriod;
-        this.selectedDate = initialDate ?? new Date().toISOString().split("T")[0]; // Trigger setter logic
+        // Call setter to perform initial calculation and dispatch (if needed)
+        this.selectedDate = initialDate ?? new Date().toISOString().split("T")[0];
+        // Ensure initial range is set if date wasn't changed by setter
+        if (!this._periodStartDate) {
+            this._recalculatePeriodRange();
+        }
+        console.log("[PluginState] Initialized.");
     }
 
     // --- Getters ---
@@ -34,7 +43,7 @@ export class PluginState {
         if (this._selectedDate !== newIsoDate) {
             this._selectedDate = newIsoDate;
             this._recalculatePeriodRange(); // Recalculate start/end based on new selected date and current period
-            this._dispatchDateChangeEvent();
+            this._dispatchDateChangeEventAndRefreshViews();
         }
     }
 
@@ -43,11 +52,9 @@ export class PluginState {
         if (this._currentPeriod !== newPeriod) {
             this._currentPeriod = newPeriod;
             this._recalculatePeriodRange(); // Recalculate start/end based on the new period and current selected date
-            this._dispatchDateChangeEvent(); // Also notify listeners of period change implicitly via date change event
+            this._dispatchDateChangeEventAndRefreshViews(); // Also notify listeners of period change implicitly via date change event
         }
     }
-
-    // --- Internal Methods ---
 
     /** Recalculates start and end dates based on current _selectedDate and _currentPeriod */
     private _recalculatePeriodRange(): void {
@@ -65,15 +72,26 @@ export class PluginState {
     }
 
     /** Dispatches the custom event to notify listeners of changes */
-    private _dispatchDateChangeEvent(): void {
+    private _dispatchDateChangeEventAndRefreshViews(): void {
         document.dispatchEvent(new CustomEvent(DATE_CHANGED_EVENT_NAME, {
-            detail: {
-                newIsoDate: this._selectedDate, // The specific selected day
-                newPeriod: this._currentPeriod, // The current period type
-                newStartDate: this._periodStartDate, // Start of the period
-                newEndDate: this._periodEndDate    // End of the period
-            }
+            detail: { /* ... date/period details ... */ }
         }));
+
+        if (this.app) {
+            this.app.workspace.getLeavesOfType('markdown').forEach(leaf => {
+                if (leaf.view instanceof MarkdownView) {
+                    const view = leaf.view;
+                    //? Force re-render of the preview mode.
+                    //? This should cause code blocks to be re-processed.
+                    view.previewMode?.rerender(true);
+                    //? For Live Preview, forcing re-render is more complex and might
+                    //? require interacting with the CodeMirror view state if the simple
+                    //? previewMode rerender isn't sufficient. Start with this.
+                }
+            });
+        } else {
+            console.warn("[PluginState] Cannot refresh views: App instance not available.");
+        }
     }
 }
 

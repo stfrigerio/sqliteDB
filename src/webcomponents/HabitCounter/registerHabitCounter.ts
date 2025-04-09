@@ -17,7 +17,7 @@ export const registerHabitCounter = (el: HTMLElement, dbService: DBService) => {
     placeholders.forEach((placeholderEl) => { //~ Removed index as it wasn't used
         if (!(placeholderEl instanceof HTMLElement)) return;
 
-        const habitKey = placeholderEl.dataset.habit; //^ Read 'habit' data attribute
+        const habitKey = placeholderEl.dataset.habit;
         const date = placeholderEl.dataset.date;
         const emoji = placeholderEl.dataset.emoji;
         const table = placeholderEl.dataset.table;

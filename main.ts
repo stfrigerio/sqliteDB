@@ -11,7 +11,7 @@ import { SQLiteDBSettingTab } from "./src/settingTab";
 import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
 import { processSqlBlock, processSqlChartBlock, DateNavigatorRenderer } from "./src/codeblocks";
 import { pickTableName } from "./src/helpers";
-import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
+import { replacePlaceholders } from "src/helpers/replacePlaceholders";
 
 import { injectDatePickerStyles } from "src/styles/datePickerInject";
 import { injectDateNavigatorStyles, removeDateNavigatorStyles } from './src/styles/dateNavigationInject';
@@ -19,6 +19,9 @@ import { injectDateNavigatorStyles, removeDateNavigatorStyles } from './src/styl
 import { registerHabitCounter } from "./src/webcomponents/HabitCounter/registerHabitCounter";
 import { registerBooleanSwitch } from "src/webcomponents/BooleanSwitch/registerBooleanSwitch";
 import { registerTextInput } from "src/webcomponents/TextInput/registerTextInput";
+
+import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
+import { pluginState } from "src/pluginState";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
@@ -30,6 +33,8 @@ export default class SQLiteDBPlugin extends Plugin {
 		this.dbService = new DBService(this.app);
 		await this.openDatabase();
 
+		pluginState.initialize(this.app);
+
 		injectDatePickerStyles();
         injectDateNavigatorStyles(); 
 
@@ -39,6 +44,32 @@ export default class SQLiteDBPlugin extends Plugin {
 			registerBooleanSwitch(el, this.dbService);
 			registerTextInput(el, this.app, this.dbService);
 		});
+
+		//? Codeblocks
+		this.registerMarkdownCodeBlockProcessor(
+			"sql",
+			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+				const processedSource = replacePlaceholders(source);
+				await processSqlBlock(this.dbService, processedSource, el);
+			}
+		);
+
+		this.registerMarkdownCodeBlockProcessor(
+			"sql-chart",
+			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+				const processedSource = replacePlaceholders(source);
+				await processSqlChartBlock(this.dbService, processedSource, el);
+			}
+		);
+
+        this.registerMarkdownCodeBlockProcessor(
+            "date-header",
+            (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+				const processedSource = replacePlaceholders(source);
+                ctx.addChild(new DateNavigatorRenderer(el, this.app, processedSource));
+
+            }
+        );
 
 		//? Commands
 		this.addCommand({
@@ -63,29 +94,6 @@ export default class SQLiteDBPlugin extends Plugin {
 				await convertEntriesInNotes(this.dbService, chosenTable, this.app);
 			},
 		});
-
-		//? Codeblocks
-		this.registerMarkdownCodeBlockProcessor(
-			"sql",
-			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-				await processSqlBlock(this.dbService, source, el);
-			}
-		);
-
-		this.registerMarkdownCodeBlockProcessor(
-			"sql-chart",
-			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-				await processSqlChartBlock(this.dbService, source, el);
-			}
-		);
-
-        this.registerMarkdownCodeBlockProcessor(
-            "date-header",
-            (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-                ctx.addChild(new DateNavigatorRenderer(el, this.app, source));
-
-            }
-        );
 
 		this.addSettingTab(new SQLiteDBSettingTab(this.app, this));
 	}
