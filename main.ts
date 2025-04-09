@@ -82,7 +82,7 @@ export default class SQLiteDBPlugin extends Plugin {
         this.registerMarkdownCodeBlockProcessor(
             "date-header",
             (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-                ctx.addChild(new DateNavigatorRenderer(el, this.app));
+                ctx.addChild(new DateNavigatorRenderer(el, this.app, source));
 
             }
         );

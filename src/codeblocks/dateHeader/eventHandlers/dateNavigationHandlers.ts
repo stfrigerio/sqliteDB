@@ -1,61 +1,43 @@
 import { App } from "obsidian";
 import { DatePickerModal } from "src/components/DatePickerModal/DatePickerModal";
 import { PluginState } from "src/pluginState";
-import { parseDateISO, formatDateISO } from "src/helpers/dateUtils";
-import { NavigationPeriod } from "../dateNavigator.types";
+import { calculateAdjacentPeriodDate } from "src/helpers/datePeriodUtils";
 
 /** Updates the global plugin state with the new date and triggers necessary updates */
-function updateGlobalDate(newDate: Date, pluginState: PluginState, app: App): void {
-    const newIsoDate = formatDateISO(newDate);
-    if (pluginState.selectedDate !== newIsoDate) {
-        pluginState.selectedDate = newIsoDate;
-    }
+function updateGlobalDate(newIsoDate: string, pluginState: PluginState): void {
+    //? pluginState setter handles recalculation and event dispatch
+    pluginState.selectedDate = newIsoDate;
 }
 
 /** Creates the handler for the "previous" button click */
 export function createPrevHandler(
     pluginState: PluginState,
-    period: NavigationPeriod,
-    app: App,
-    //? Callback to update the display text after changing the date
-    updateDisplayCallback: (newIsoDate: string) => void
+    app: App
 ): () => void {
     return () => {
-        const currentDate = parseDateISO(pluginState.selectedDate) ?? new Date(); // Default to today on parse error
-        switch (period) {
-            case 'day':
-                currentDate.setUTCDate(currentDate.getUTCDate() - 1);
-                break;
-            //todo: Implement 'week', 'month', etc.
-            default:
-                console.warn(`[DateNavHandlers] Unsupported period for prev navigation: ${period}`);
-                return;
+        const currentPeriod = pluginState.currentPeriod;
+        const newIsoDate = calculateAdjacentPeriodDate(pluginState.selectedDate, currentPeriod, 'prev');
+        if (newIsoDate) {
+            updateGlobalDate(newIsoDate, pluginState); // Updates state -> triggers display update via listener
+        } else { 
+            console.error("[DateNavHandlers] Failed to calculate previous date.");
         }
-        updateGlobalDate(currentDate, pluginState, app);
-        updateDisplayCallback(formatDateISO(currentDate)); // Update local display
     };
 }
 
 /** Creates the handler for the "next" button click */
 export function createNextHandler(
     pluginState: PluginState,
-    period: NavigationPeriod,
-    app: App,
-    updateDisplayCallback: (newIsoDate: string) => void
+    app: App
 ): () => void {
     return () => {
-        const currentDate = parseDateISO(pluginState.selectedDate) ?? new Date();
-        switch (period) {
-            case 'day':
-                currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-                break;
-            //todo: Implement 'week', 'month', etc.
-            default:
-                console.warn(`[DateNavHandlers] Unsupported period for next navigation: ${period}`);
-                return;
+        const currentPeriod = pluginState.currentPeriod;
+        const newIsoDate = calculateAdjacentPeriodDate(pluginState.selectedDate, currentPeriod, 'next');
+        if (newIsoDate) {
+            updateGlobalDate(newIsoDate, pluginState);
+        } else { 
+            console.error("[DateNavHandlers] Failed to calculate next date.");
         }
-        updateGlobalDate(currentDate, pluginState, app);
-        updateDisplayCallback(formatDateISO(currentDate));
     };
 }
 
@@ -63,11 +45,14 @@ export function createNextHandler(
 export function createOpenModalHandler(
     pluginState: PluginState,
     app: App,
-    updateDisplayCallback: (newIsoDate: string) => void
 ): () => void {
     return () => {
         new DatePickerModal(app, pluginState.selectedDate, (newIsoDate) => {
-            updateDisplayCallback(newIsoDate);
+            //? Modal selecting a specific DAY always updates the global selectedDate
+            //? State setter will handle recalculation and events
+            updateGlobalDate(newIsoDate, pluginState);
+            // updateDisplayCallback(newIsoDate); // Display updates via listener
         }).open();
     };
 }
+

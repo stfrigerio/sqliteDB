@@ -3,7 +3,7 @@ import { App } from "obsidian";
 import { pluginState } from "src/pluginState";
 
 //? Defines the period types the navigator can handle (currently only 'day')
-export type NavigationPeriod = 'day'; //todo: Add 'week', 'month', 'year' later
+export type NavigationPeriod = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
 //? Configuration options for the DateNavigator
 export interface DateNavigatorOptions {
@@ -17,9 +17,9 @@ export interface DateNavigatorOptions {
 //? References to the DOM elements created by the navigator builder
 export interface DateNavigatorDOMElements {
     wrapper: HTMLElement;
-    navRow: HTMLElement;
     prevButton: HTMLButtonElement;
     nextButton: HTMLButtonElement;
     dateDisplay: HTMLElement; // The H1 or span showing the date
     openModalButton: HTMLButtonElement;
+    periodSelect?: HTMLSelectElement;
 }

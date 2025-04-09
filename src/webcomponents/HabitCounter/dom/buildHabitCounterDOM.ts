@@ -16,7 +16,6 @@ export function buildHabitCounterDOM(
     shadowRoot: ShadowRoot,
     handlers: HabitCounterEventHandlers
 ): HabitCounterUIElements {
-    //& console.log("[HabitCounterDOM] buildHabitCounterDOM called.");
     if (!shadowRoot) throw new Error("Cannot build DOM: ShadowRoot is null.");
     if (!handlers || typeof handlers.handleDecrement !== 'function' || typeof handlers.handleIncrement !== 'function') {
         throw new Error("Cannot build DOM: Invalid event handlers provided.");
