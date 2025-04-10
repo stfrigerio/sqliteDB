@@ -22,6 +22,7 @@ import { registerTextInput } from "src/webcomponents/TextInput/registerTextInput
 
 import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 import { pluginState } from "src/pluginState";
+import { registerTimestampUpdaterButton } from "src/webcomponents/TimestampUpdaterButton/registerTimestampUpdaterButton";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
@@ -44,6 +45,8 @@ export default class SQLiteDBPlugin extends Plugin {
 			registerBooleanSwitch(el, this.dbService);
 			registerTextInput(el, this.app, this.dbService);
 		});
+
+        registerTimestampUpdaterButton(this);
 
 		//? Codeblocks
 		this.registerMarkdownCodeBlockProcessor(
