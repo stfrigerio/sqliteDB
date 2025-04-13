@@ -12,6 +12,7 @@
     "isolatedModules": true,
     "strictNullChecks": true,
     "esModuleInterop": true,
+    "jsx": "react",
     "lib": [
       "DOM",
       "ES5",
@@ -20,6 +21,7 @@
     ]
   },
   "include": [
-    "**/*.ts"
+    "**/*.ts",
+    "**/*.tsx"
   ]
 }

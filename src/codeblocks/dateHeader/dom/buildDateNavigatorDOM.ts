@@ -68,7 +68,7 @@ export function updateDateNavigatorDisplay(
     newPeriod: NavigationPeriod
 ): void {
     const displayString = formatPeriodForDisplay(newIsoDate, newPeriod);
-    if (!elements) { console.error("[DateNavDOM] Cannot update display, elements object is null."); return; }
+    if (!elements) { return; }
 
     // Update Title
     if (elements.dateDisplay) {

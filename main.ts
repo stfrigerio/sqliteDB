@@ -19,10 +19,11 @@ import { injectDateNavigatorStyles, removeDateNavigatorStyles } from './src/styl
 import { registerHabitCounter } from "./src/webcomponents/HabitCounter/registerHabitCounter";
 import { registerBooleanSwitch } from "src/webcomponents/BooleanSwitch/registerBooleanSwitch";
 import { registerTextInput } from "src/webcomponents/TextInput/registerTextInput";
+import { registerTimestampUpdaterButton } from "src/webcomponents/TimestampUpdaterButton/registerTimestampUpdaterButton";
+import { registerSqlChartRenderer } from "src/webcomponents/SqlChart/registerSqlChart";
 
 import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 import { pluginState } from "src/pluginState";
-import { registerTimestampUpdaterButton } from "src/webcomponents/TimestampUpdaterButton/registerTimestampUpdaterButton";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
@@ -46,6 +47,7 @@ export default class SQLiteDBPlugin extends Plugin {
 			registerTextInput(el, this.app, this.dbService);
 		});
 
+		registerSqlChartRenderer(this, this.dbService);
         registerTimestampUpdaterButton(this);
 
 		//? Codeblocks

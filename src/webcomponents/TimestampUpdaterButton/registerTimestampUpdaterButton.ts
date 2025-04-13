@@ -12,8 +12,6 @@ export function registerTimestampUpdaterButton(plugin: Plugin): void {
 
     plugin.registerMarkdownPostProcessor((element, context: MarkdownPostProcessorContext) => {
         const { app } = plugin;
-        console.log(`Timestamp PostProcessor running for section in: ${context.sourcePath}`);
-
         const placeholderElements = element.querySelectorAll('.timestamp-updater-placeholder');
 
         if (placeholderElements.length === 0) {
