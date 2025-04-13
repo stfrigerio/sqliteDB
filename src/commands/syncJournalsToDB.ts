@@ -57,8 +57,15 @@ export async function syncJournalsToDB(dbService: DBService, folderPath: string,
 
             // Basic validation
             if (!journalData.date) {
-                console.warn(`Skipping note "${note.path}" - missing 'date' in frontmatter.`);
-                continue;
+                // Try to extract date from filename if not in frontmatter
+                const dateFromFilename = extractDateFromFilename(note.name);
+                if (dateFromFilename) {
+                    journalData.date = dateFromFilename;
+                    console.log(`Extracted date from filename for "${note.path}": ${dateFromFilename}`);
+                } else {
+                    console.warn(`Skipping note "${note.path}" - missing 'date' in frontmatter and filename.`);
+                    continue;
+                }
             }
 
             // --- Sync Logic ---
@@ -180,4 +187,14 @@ async function updateNoteFrontmatter(file: TFile, newData: Record<string, any>, 
         await app.vault.modify(file, newFileContent);
         console.log(`Updated frontmatter for "${file.path}"`);
     }
+}
+
+// Helper to extract date from filename (format "Journal YYYY-MM-DD")
+function extractDateFromFilename(filename: string): string | null {
+    // Match "Journal YYYY-MM-DD" pattern
+    const match = filename.match(/Journal\s+(\d{4}-\d{2}-\d{2})/i);
+    if (match && match[1]) {
+        return match[1];
+    }
+    return null;
 }
