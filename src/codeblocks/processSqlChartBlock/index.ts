@@ -54,7 +54,7 @@ export async function processSqlChartBlock(dbService: DBService, source: string,
                     el.createEl("p", { text: "Database not loaded." });
                     return;
                 }
-                const result = db.exec(query, params);
+                const result = db.exec(query, params as any);
                 if (!result || result.length === 0 || result[0].values.length === 0) {
                     el.createEl("p", { text: "No data found for the specified parameters." });
                     return;
