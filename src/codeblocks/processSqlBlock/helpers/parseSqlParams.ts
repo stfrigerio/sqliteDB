@@ -45,14 +45,41 @@ export function parseSqlParams(source: string): SqlParams | null {
                 case 'orderBy':
                     params.orderBy = val;
                     break;
+                case 'displayFormat':
+                    const format = val.toLowerCase();
+                    if (format === 'list' || format === 'table') {
+                        params.displayFormat = format;
+                    } else {
+                        console.warn(`Invalid displayFormat "${val}", defaulting to 'list'.`);
+                        params.displayFormat = 'list'; // Default if invalid value
+                    }
+                    break;
             }
         }
     }
 
-    // Validate required parameters
+    // --- Validation for required 'table' ---
     if (!params.table) {
+        // Indicate parsing failure specifically because 'table' is missing
+        // The calling function will handle displaying the error message.
         return null;
     }
+
+    // --- Set Default displayFormat if not provided ---
+    if (!params.displayFormat) {
+        params.displayFormat = 'list';
+    }
+
+    // Check consistency if multiple filters were provided
+    if (Array.isArray(params.filterColumn) || Array.isArray(params.filterValue)) {
+        if (!Array.isArray(params.filterColumn) || !Array.isArray(params.filterValue) || params.filterColumn.length !== params.filterValue.length) {
+            console.error("Mismatch between number of filterColumn and filterValue entries. Filtering might be incorrect.");
+             // Decide how to handle: throw error, ignore filters, return null?
+             // Returning null might be safest if config is invalid
+             return null; // Indicate parsing failure due to inconsistent filters
+        }
+    }
+
 
     return params as SqlParams;
 }

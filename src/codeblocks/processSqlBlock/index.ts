@@ -1,6 +1,7 @@
 import { Notice } from "obsidian";
 import { DBService } from "../../DBService";
 import { parseSqlParams, validateTable, buildSqlQuery, renderResults } from "./helpers";
+import { renderResultsAsTable } from "./helpers/renderResultsAsTable";
 
 export async function processSqlBlock(dbService: DBService, source: string, el: HTMLElement) {
     const params = parseSqlParams(source);
@@ -75,9 +76,16 @@ orderDirection: asc`
             return;
         }
 
-        // Render results if found
-        renderResults(resultsToRender, el);
-
+        // --- Choose Renderer based on displayFormat ---
+        el.empty(); // Clear loading message or previous content
+        if (params.displayFormat === 'table') {
+            console.log("Rendering SQL block as table");
+            renderResultsAsTable(resultsToRender, el);
+        } else { // Default to 'list'
+            console.log("Rendering SQL block as list");
+            renderResults(resultsToRender, el); // Assuming renderResults is the list renderer
+        }
+        
     } catch (error) {
         el.empty(); // Clear before showing error
         el.createEl("p", { text: "An error occurred processing the SQL block." });
