@@ -47,6 +47,27 @@ export class SQLiteDBSettingTab extends PluginSettingTab {
 						this.plugin.settings.apiBaseUrl = value;
 						await this.plugin.saveSettings();
 					}));
+
+		new Setting(containerEl)
+		.setName('Journal Folder Path')
+		.setDesc('Path to the folder containing your journal notes (relative to vault root).')
+		.addText(text => text
+			.setPlaceholder('e.g., Journals or Notes/Daily')
+			.setValue(this.plugin.settings.journalFolderPath)
+			.onChange(async (value) => {
+				this.plugin.settings.journalFolderPath = value;
+				await this.plugin.saveSettings();
+			}));
+		
+		new Setting(containerEl)
+			.setName('Journal Table Name')
+			.setDesc('The name of the database table for journal entries.')
+			.addText(text => text
+				.setPlaceholder('e.g., Journals')
+				.setValue(this.plugin.settings.journalTableName)
+				.onChange(async (value) => {
+					this.plugin.settings.journalTableName = value;
+					await this.plugin.saveSettings();
+				}));
 	}
-	
 }

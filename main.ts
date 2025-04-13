@@ -4,29 +4,25 @@ import {
 	Editor,
 	MarkdownView,
 	MarkdownPostProcessorContext,
-	Notice
+	Notice,
 } from "obsidian";
 
 import { DBService } from "./src/DBService";
 import { SQLiteDBSettingTab } from "./src/settingTab";
-import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
+import { inspectTableStructure, convertEntriesInNotes, syncDBToJournals, syncJournalsToDB } from "./src/commands";
 import { processSqlBlock, processSqlChartBlock, DateNavigatorRenderer } from "./src/codeblocks";
-import { pickTableName } from "./src/helpers";
-import { replacePlaceholders } from "src/helpers/replacePlaceholders";
-
-import { injectDatePickerStyles } from "src/styles/datePickerInject";
-import { injectDateNavigatorStyles, removeDateNavigatorStyles } from './src/styles/dateNavigationInject';
-
-import { registerHabitCounter } from "./src/webcomponents/HabitCounter/registerHabitCounter";
-import { registerBooleanSwitch } from "src/webcomponents/BooleanSwitch/registerBooleanSwitch";
-import { registerTextInput } from "src/webcomponents/TextInput/registerTextInput";
-import { registerTimestampUpdaterButton } from "src/webcomponents/TimestampUpdaterButton/registerTimestampUpdaterButton";
-import { registerSqlChartRenderer } from "src/webcomponents/SqlChart/registerSqlChart";
-
+import { pickTableName, replacePlaceholders } from "./src/helpers";
+import { injectDatePickerStyles, injectDateNavigatorStyles, injectTimePickerStyles, removeDateNavigatorStyles } from "src/styles";
+import { 
+	registerHabitCounter, 
+	registerBooleanSwitch, 
+	registerTextInput, 
+	registerTimestampUpdaterButton, 
+	registerSqlChartRenderer, 
+	registerMoodNoteButtonProcessor 
+} from "./src/webcomponents";
 import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 import { pluginState } from "src/pluginState";
-import { MoodNoteEntryModal } from "src/components/MoodNoteModal/MoodNoteEntryModal";
-import { registerMoodNoteButtonProcessor } from "src/webcomponents/MoodNote/moodButtonProcessor";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
@@ -42,6 +38,7 @@ export default class SQLiteDBPlugin extends Plugin {
 
 		injectDatePickerStyles();
         injectDateNavigatorStyles(); 
+		injectTimePickerStyles();
 
 		//? Components
 		this.registerMarkdownPostProcessor((el, ctx) => {
@@ -102,6 +99,32 @@ export default class SQLiteDBPlugin extends Plugin {
 				// 2) Call the dump function with the chosen table
 				await convertEntriesInNotes(this.dbService, chosenTable, this.app);
 			},
+		});
+
+		this.addCommand({
+			id: 'sync-journal-notes-to-db',
+			name: 'Sync Journal Notes -> Database',
+			callback: async () => {
+				if (!this.settings.journalFolderPath || !this.settings.journalTableName) {
+					new Notice("Please configure Journal folder path and table name in settings.");
+					return;
+				}
+				new Notice("Starting sync: Notes -> DB...");
+				await syncJournalsToDB(this.dbService, this.settings.journalFolderPath, this.settings.journalTableName, this.app);
+			}
+		});
+
+		this.addCommand({
+			id: 'sync-journal-db-to-notes',
+			name: 'Sync Database -> Journal Notes',
+			callback: async () => {
+					if (!this.settings.journalFolderPath || !this.settings.journalTableName) {
+					new Notice("Please configure Journal folder path and table name in settings.");
+					return;
+				}
+				new Notice("Starting sync: DB -> Notes...");
+				await syncDBToJournals(this.dbService, this.settings.journalTableName, this.settings.journalFolderPath, this.app);
+			}
 		});
 
 		this.addSettingTab(new SQLiteDBSettingTab(this.app, this));
