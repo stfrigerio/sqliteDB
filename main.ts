@@ -3,7 +3,8 @@ import {
 	FileSystemAdapter,
 	Editor,
 	MarkdownView,
-	MarkdownPostProcessorContext
+	MarkdownPostProcessorContext,
+	Notice
 } from "obsidian";
 
 import { DBService } from "./src/DBService";
@@ -24,6 +25,8 @@ import { registerSqlChartRenderer } from "src/webcomponents/SqlChart/registerSql
 
 import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
 import { pluginState } from "src/pluginState";
+import { MoodNoteEntryModal } from "src/components/MoodNoteModal/MoodNoteEntryModal";
+import { registerMoodNoteButtonProcessor } from "src/webcomponents/MoodNote/moodButtonProcessor";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
@@ -49,6 +52,7 @@ export default class SQLiteDBPlugin extends Plugin {
 
 		registerSqlChartRenderer(this, this.dbService);
         registerTimestampUpdaterButton(this);
+        registerMoodNoteButtonProcessor(this, this.dbService);
 
 		//? Codeblocks
 		this.registerMarkdownCodeBlockProcessor(
