@@ -79,10 +79,8 @@ orderDirection: asc`
         // --- Choose Renderer based on displayFormat ---
         el.empty(); // Clear loading message or previous content
         if (params.displayFormat === 'table') {
-            console.log("Rendering SQL block as table");
             renderResultsAsTable(resultsToRender, el);
         } else { // Default to 'list'
-            console.log("Rendering SQL block as list");
             renderResults(resultsToRender, el); // Assuming renderResults is the list renderer
         }
         
