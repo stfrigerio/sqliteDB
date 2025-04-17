@@ -19,6 +19,7 @@ import {
 	registerTextInput, 
 	registerTimestampUpdaterButton, 
 	registerSqlChartRenderer, 
+	registerSqlRenderer,
 	registerMoodNoteButtonProcessor,
 	registerAddTextSupport
 } from "./src/webcomponents";
@@ -49,9 +50,11 @@ export default class SQLiteDBPlugin extends Plugin {
 		});
 
 		registerSqlChartRenderer(this, this.dbService);
+		registerSqlRenderer(this, this.dbService);
         registerTimestampUpdaterButton(this);
         registerMoodNoteButtonProcessor(this, this.dbService);
 		registerAddTextSupport(this, this.dbService);
+
 		
 		//? Codeblocks
 		this.registerMarkdownCodeBlockProcessor(
