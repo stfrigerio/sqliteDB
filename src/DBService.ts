@@ -87,15 +87,23 @@ export class DBService {
      * @returns Promise resolving to an array of result objects
      */
 	async getQuery<T extends Record<string, any>>(sql: string, params: any[] = []): Promise<T[]> {
-		if (this.mode === "remote") {
-			const res = await fetch(`${this.apiBaseUrl}/query`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ sql, params }),
-			});
-			if (!res.ok) throw new Error(await res.text());
-			return await res.json();
-		}
+        if (this.mode === "remote") {
+            const res = await fetch(`${this.apiBaseUrl}/query`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(this.settings?.cfAccessClientId && {
+                        "CF-Access-Client-Id": this.settings.cfAccessClientId,
+                    }),
+                    ...(this.settings?.cfAccessClientSecret && {
+                        "CF-Access-Client-Secret": this.settings.cfAccessClientSecret,
+                    }),
+                },
+                body: JSON.stringify({ sql, params }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            return await res.json();
+        }
 
 		if (!this.db) throw new Error("Database not loaded (local mode).");
 
@@ -125,8 +133,16 @@ export class DBService {
 		if (this.mode === "remote") {
 			const res = await fetch(`${this.apiBaseUrl}/execute`, {
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ sql, params }),
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(this.settings?.cfAccessClientId && {
+                        "CF-Access-Client-Id": this.settings.cfAccessClientId,
+                    }),
+                    ...(this.settings?.cfAccessClientSecret && {
+                        "CF-Access-Client-Secret": this.settings.cfAccessClientSecret,
+                    }),
+                },
+                body: JSON.stringify({ sql, params }),
 			});
 			if (!res.ok) throw new Error(await res.text());
 			return;

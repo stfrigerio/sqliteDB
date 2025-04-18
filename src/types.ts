@@ -4,6 +4,8 @@ export interface SQLiteDBSettings {
 	apiBaseUrl: string;
 	journalFolderPath: string;
 	journalTableName: string;
+	cfAccessClientId: string;
+	cfAccessClientSecret: string;
 }
 
 export const DEFAULT_SETTINGS: SQLiteDBSettings = {
@@ -12,4 +14,6 @@ export const DEFAULT_SETTINGS: SQLiteDBSettings = {
 	apiBaseUrl: "",
 	journalFolderPath: "",
 	journalTableName: "",
+	cfAccessClientId: "",
+	cfAccessClientSecret: "",
 };

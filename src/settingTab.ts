@@ -69,5 +69,29 @@ export class SQLiteDBSettingTab extends PluginSettingTab {
 					this.plugin.settings.journalTableName = value;
 					await this.plugin.saveSettings();
 				}));
+
+		new Setting(containerEl)
+			.setName("CF Access Client ID")
+			.setDesc("Cloudflare Access client ID for remote API authentication")
+			.addText(text =>
+				text
+					.setPlaceholder("your-client-id")
+					.setValue(this.plugin.settings.cfAccessClientId || "")
+					.onChange(async (value) => {
+						this.plugin.settings.cfAccessClientId = value;
+						await this.plugin.saveSettings();
+					}));
+			
+		new Setting(containerEl)
+			.setName("CF Access Client Secret")
+			.setDesc("Cloudflare Access client secret for remote API authentication")
+			.addText(text =>
+				text
+					.setPlaceholder("your-client-secret")
+					.setValue(this.plugin.settings.cfAccessClientSecret || "")
+					.onChange(async (value) => {
+						this.plugin.settings.cfAccessClientSecret = value;
+						await this.plugin.saveSettings();
+					}));
 	}
 }
