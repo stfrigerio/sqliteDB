@@ -1,4 +1,4 @@
-import { HabitDataArgs, UpdateHabitDataArgs } from "../../HabitCounter.types";
+import { HabitDataArgs, UpdateHabitDataArgs } from "src/webcomponents/HabitCounter/HabitCounter.types";
 
 const IDENTIFIER_REGEX = /^[a-zA-Z0-9_]+$/; //? Basic check for valid SQL identifiers
 
