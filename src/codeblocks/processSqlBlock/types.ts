@@ -11,6 +11,7 @@ export interface SqlParams {
     orderBy?: string;
     orderDirection?: string;
     limit?: number;
+    displayFormat?: string;
 }
 
 export interface ValidationError {

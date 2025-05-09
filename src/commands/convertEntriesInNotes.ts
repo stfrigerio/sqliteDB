@@ -1,5 +1,5 @@
 import { App, Notice, TFile, TFolder, normalizePath, FileSystemAdapter } from "obsidian";
-import { DBService } from "../dbService";
+import { DBService } from "../DBService";
 import { ColumnPickerModal } from "../components/ColumnPickerModal";
 
 /**

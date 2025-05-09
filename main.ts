@@ -1,39 +1,92 @@
 import {
-	App,
 	Plugin,
-	PluginSettingTab,
-	Setting,
-	Notice,
 	FileSystemAdapter,
 	Editor,
 	MarkdownView,
-	MarkdownPostProcessorContext
+	MarkdownPostProcessorContext,
+	Notice,
 } from "obsidian";
 
-import { DBService } from "./src/dbService";
-import { inspectTableStructure, convertEntriesInNotes } from "./src/commands";
-import { processSqlBlock, processSqlChartBlock } from "./src/codeblocks";
-import { pickTableName } from "./src/helpers";
+import { DBService } from "./src/DBService";
+import { SQLiteDBSettingTab } from "./src/settingTab";
+import { inspectTableStructure, convertEntriesInNotes, syncDBToJournals, syncJournalsToDB } from "./src/commands";
+import { processSqlBlock, processSqlChartBlock, DateNavigatorRenderer } from "./src/codeblocks";
+import { pickTableName, replacePlaceholders } from "./src/helpers";
+import { injectDatePickerStyles, injectDateNavigatorStyles, injectTimePickerStyles, removeDateNavigatorStyles } from "src/styles";
+import { 
+	registerHabitCounter, 
+	registerBooleanSwitch, 
+	registerTextInput, 
+	registerTimestampUpdaterButton, 
+	registerSqlChartRenderer, 
+	registerSqlRenderer,
+	registerMoodNoteButtonProcessor,
+	registerAddTextSupport
+} from "./src/webcomponents";
 import { SQLiteDBSettings, DEFAULT_SETTINGS } from "./src/types";
+import { pluginState } from "src/pluginState";
 
 export default class SQLiteDBPlugin extends Plugin {
 	settings: SQLiteDBSettings;
 	private dbService: DBService;
-
+	
 	async onload() {
-		console.log("Loading SQLiteDBPlugin...");
+		// init
 		await this.loadSettings();
-
 		this.dbService = new DBService(this.app);
-
 		await this.openDatabase();
 
+		pluginState.initialize(this.app);
+
+		injectDatePickerStyles();
+        injectDateNavigatorStyles(); 
+		injectTimePickerStyles();
+
+		//? Components
+		this.registerMarkdownPostProcessor((el, ctx) => {
+			registerHabitCounter(el, this.dbService);
+			registerBooleanSwitch(el, this.dbService);
+			registerTextInput(el, this.app, this.dbService);
+		});
+
+		registerSqlChartRenderer(this, this.dbService);
+		registerSqlRenderer(this, this.dbService);
+        registerTimestampUpdaterButton(this);
+        registerMoodNoteButtonProcessor(this, this.dbService);
+		registerAddTextSupport(this, this.dbService);
+
+		
+		//? Codeblocks
+		this.registerMarkdownCodeBlockProcessor(
+			"sql",
+			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+				const processedSource = replacePlaceholders(source);
+				await processSqlBlock(this.dbService, processedSource, el);
+			}
+		);
+
+		this.registerMarkdownCodeBlockProcessor(
+			"sql-chart",
+			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+				const processedSource = replacePlaceholders(source);
+				await processSqlChartBlock(this.dbService, processedSource, el);
+			}
+		);
+
+        this.registerMarkdownCodeBlockProcessor(
+            "date-header",
+            (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+				const processedSource = replacePlaceholders(source);
+                ctx.addChild(new DateNavigatorRenderer(el, this.app, processedSource));
+
+            }
+        );
+
+		//? Commands
 		this.addCommand({
 			id: "inspect-table-structure",
 			name: "Inspect table structure",
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
-				// ensure DB is loaded (if not, load)
-				await this.openDatabase();
 				await inspectTableStructure(this.dbService, editor, this.app);
 			},
 		});
@@ -41,9 +94,7 @@ export default class SQLiteDBPlugin extends Plugin {
 		this.addCommand({
 			id: "dump-table-to-notes",
 			name: "Dump table to notes",
-			callback: async () => {
-				await this.openDatabase(); // ensure DB is loaded
-			
+			callback: async () => {			
 				// 1) pick a table
 				const chosenTable = await pickTableName(this.dbService, this.app);
 				if (!chosenTable) {
@@ -55,39 +106,55 @@ export default class SQLiteDBPlugin extends Plugin {
 			},
 		});
 
-		this.registerMarkdownCodeBlockProcessor(
-			"sql", // <-- the name of your code block (```sql)
-			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-				await processSqlBlock(this.dbService, source, el);
+		this.addCommand({
+			id: 'sync-journal-notes-to-db',
+			name: 'Sync Journal Notes -> Database',
+			callback: async () => {
+				if (!this.settings.journalFolderPath || !this.settings.journalTableName) {
+					new Notice("Please configure Journal folder path and table name in settings.");
+					return;
+				}
+				new Notice("Starting sync: Notes -> DB...");
+				await syncJournalsToDB(this.dbService, this.settings.journalFolderPath, this.settings.journalTableName, this.app);
 			}
-		);
+		});
 
-		this.registerMarkdownCodeBlockProcessor(
-			"sql-chart",
-			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-				await processSqlChartBlock(this.dbService, source, el);
+		this.addCommand({
+			id: 'sync-journal-db-to-notes',
+			name: 'Sync Database -> Journal Notes',
+			callback: async () => {
+					if (!this.settings.journalFolderPath || !this.settings.journalTableName) {
+					new Notice("Please configure Journal folder path and table name in settings.");
+					return;
+				}
+				new Notice("Starting sync: DB -> Notes...");
+				await syncDBToJournals(this.dbService, this.settings.journalTableName, this.settings.journalFolderPath, this.app);
 			}
-		);
+		});
 
 		this.addSettingTab(new SQLiteDBSettingTab(this.app, this));
 	}
 
 	onunload() {
-		console.log("Unloading SQLiteDBPlugin...");
+		removeDateNavigatorStyles();
 	}
 
 	private async openDatabase(forceReload = true) {
 		const adapter = this.app.vault.adapter;
 		let basePath: string;
-		
+	
 		if (adapter instanceof FileSystemAdapter) {
 			basePath = adapter.getBasePath();
 		} else {
 			basePath = (adapter as any).getFullPath("");
 		}
-		
-		await this.dbService.ensureDBLoaded(this.settings, basePath, forceReload);
-	}
+	
+		if (this.settings.mode === "local") {
+			await this.dbService.ensureDBLoaded(this.settings, basePath, forceReload);
+		} else {
+			await this.dbService.ensureDBLoaded(this.settings, basePath, false);
+		}
+	}	
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -98,29 +165,3 @@ export default class SQLiteDBPlugin extends Plugin {
 	}
 }
 
-class SQLiteDBSettingTab extends PluginSettingTab {
-	plugin: SQLiteDBPlugin;
-
-	constructor(app: App, plugin: SQLiteDBPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName("Database file path")
-			.setDesc("Absolute path to the .db file on disk.")
-			.addText((text) =>
-				text
-					.setPlaceholder("/home/user/path/to/your.db")
-					.setValue(this.plugin.settings.dbFilePath)
-					.onChange(async (value) => {
-						this.plugin.settings.dbFilePath = value;
-						await this.plugin.saveSettings();
-					})
-			);
-	}
-}

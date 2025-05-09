@@ -9,31 +9,47 @@ function isPieConfig(config: ChartConfig): config is PieChartConfig {
     return config.chartType === 'pie';
 }
 
-export function processChartData(rowObj: any, config: ChartConfig) {
-    if (isPieConfig(config)) {
-        const labels = rowObj.values.map((row: any[]) => row[0]);
-        const datasets = [{
-            data: rowObj.values.map((row: any[]) => row[1]),
-            label: config.valueColumn
-        }];
-        return { labels, datasets };
-    }
+function formatSeconds(totalSeconds: number): string {
+	const hrs = Math.floor(totalSeconds / 3600);
+	const mins = Math.floor((totalSeconds % 3600) / 60);
+	const secs = Math.floor(totalSeconds % 60);
 
-    let labels: any[];
-    let datasets: any[];
-
-    if (config.categoryColumn) {
-        const { labels: groupLabels, datasets: groupDatasets } = processGroupedData(rowObj, config);
-        labels = groupLabels;
-        datasets = groupDatasets;
-    } else {
-        labels = rowObj.values.map((row: any[]) => row[0]);
-        datasets = processUngroupedData(rowObj, config);
-    }
-
-    return { labels, datasets };
+	const pad = (n: number) => String(n).padStart(2, '0');
+	return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
 }
 
+export function processChartData(rowObj: any, config: ChartConfig) {
+	if (isPieConfig(config)) {
+		const isDuration = config.table === 'Time' && config.valueColumn === 'duration';
+
+		const labels = rowObj.values.map((row: any[]) => {
+			const label = row[0];
+			const value = row[1];
+			return isDuration ? `${label} | ${formatSeconds(value)}` : label;
+		});
+
+		const datasets = [{
+			data: rowObj.values.map((row: any[]) => row[1]),
+			label: config.valueColumn
+		}];
+
+		return { labels, datasets };
+	}
+
+	let labels: any[];
+	let datasets: any[];
+
+	if (config.categoryColumn) {
+		const { labels: groupLabels, datasets: groupDatasets } = processGroupedData(rowObj, config);
+		labels = groupLabels;
+		datasets = groupDatasets;
+	} else {
+		labels = rowObj.values.map((row: any[]) => row[0]);
+		datasets = processUngroupedData(rowObj, config);
+	}
+
+	return { labels, datasets };
+}
 
 function processGroupedData(rowObj: any, config: TimeSeriesChartConfig) {
     const groupedData = new Map();
