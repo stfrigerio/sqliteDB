@@ -1,7 +1,7 @@
 {
 	"id": "sqlite-db",
 	"name": "SQLite DB",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
 	"description": "Interact with local SQLite files in your notes",
 	"author": "Stefano Frigerio",
