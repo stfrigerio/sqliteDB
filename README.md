@@ -21,6 +21,15 @@ The **SQLite DB Plugin** allows you to interact with SQLite databases directly w
 
 ## Configuration
 
+1. **Open Obsidian Settings**  
+  Navigate to **Community Plugins** and disable **Safe Mode**.
+2. **Browse Community Plugins**  
+  Search for **SQLite DB Plugin**, then click **Install**.
+3. **Enable the Plugin**  
+  In your Community Plugins list, enable the plugin.
+4. **Download the .wasm file**
+  From the repository and put in the folder of the plugin (.obsidian/plugins/sqlite-db)
+
 Once the plugin is installed, open Settings → SQLite DB Plugin to configure it.
 You can choose to work with either a local database file or a remote API, and optionally integrate with your daily notes or Cloudflare Access for secure API access.
 
@@ -250,3 +259,4 @@ It supports both inline editing and a "button-triggered" modal input, making it 
 ```
 
 ![Text Input](./assets/text-input.png)
+
