@@ -62,6 +62,7 @@ export function createLineChart(labels: string[], datasets: any[], options: Line
                 legend: {
                     display: chartOptions.showLegend,
                     position: 'top' as const,
+                    align: 'center' as const,
                     labels: {
                         usePointStyle: true,
                         padding: 15,

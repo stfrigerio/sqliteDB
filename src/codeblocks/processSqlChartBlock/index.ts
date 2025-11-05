@@ -2,6 +2,7 @@ import { DBService } from "../../DBService";
 import { parseChartParams, validateColumns, buildSqlQuery, processChartData } from "./helpers";
 import { ChartType, createChart } from "./charts";
 import { Notice } from "obsidian";
+import { renderChart } from "./renderChart";
 
 export async function processSqlChartBlock(dbService: DBService, source: string, el: HTMLElement) {
     await renderChartBlock();
@@ -66,7 +67,7 @@ export async function processSqlChartBlock(dbService: DBService, source: string,
                     Object.fromEntries(rowArr.map((val, idx) => [columns[idx], val]))
                 );
 
-                ({ labels, datasets } = processChartData(rows, config));
+                ({ labels, datasets } = processChartData({ columns, values }, config));
             }
 
             const chartData = createChart(
@@ -77,8 +78,7 @@ export async function processSqlChartBlock(dbService: DBService, source: string,
             );
 
             const wrapper = el.createDiv({ cls: 'obsidian-sql-chart' });
-            // @ts-ignore
-            window.renderChart(chartData, wrapper);
+            renderChart(chartData, wrapper);
         } catch (error) {
             el.createEl("p", { text: "An error occurred while processing the chart." });
             el.createEl("p", { text: String(error) });

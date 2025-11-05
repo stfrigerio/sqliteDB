@@ -66,6 +66,7 @@ export function createBarChart(labels: string[], datasets: any[], options: BarCh
                 legend: {
                     display: chartOptions.showLegend,
                     position: 'top' as const,
+                    align: 'center' as const,
                     labels: {
                         usePointStyle: false,
                         padding: 15,

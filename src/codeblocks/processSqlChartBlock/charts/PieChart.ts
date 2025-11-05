@@ -62,6 +62,17 @@ export function createPieChart(labels: string[], datasets: any[], options: PieCh
                     display: chartOptions.showLegend,
                     position: 'right' as const,
                     align: 'center' as const,
+                    onClick: (e: any, legendItem: any, legend: any) => {
+                        const index = legendItem.index;
+                        const chart = legend.chart;
+                        const meta = chart.getDatasetMeta(0);
+
+                        // Toggle the data visibility
+                        meta.data[index].hidden = !meta.data[index].hidden;
+
+                        // Update the chart
+                        chart.update();
+                    },
                     labels: {
                         padding: 20,
                         boxWidth: 15,
@@ -71,14 +82,24 @@ export function createPieChart(labels: string[], datasets: any[], options: PieCh
                         },
                         generateLabels: (chart: any) => {
                             const data = chart.data;
-                            return data.labels.map((label: string, index: number) => ({
-                                text: `${label}: ${data.datasets[0].data[index]}`,
-                                fillStyle: data.datasets[0].backgroundColor[index],
-                                strokeStyle: data.datasets[0].borderColor[index],
-                                lineWidth: 1,
-                                hidden: isNaN(data.datasets[0].data[index]),
-                                index
-                            }));
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map((label: string, index: number) => {
+                                    const meta = chart.getDatasetMeta(0);
+                                    const hidden = meta.data[index] ? meta.data[index].hidden : false;
+
+                                    return {
+                                        text: `${label}: ${data.datasets[0].data[index]}`,
+                                        fillStyle: hidden ? 'rgba(128, 128, 128, 0.3)' : data.datasets[0].backgroundColor[index],
+                                        strokeStyle: hidden ? 'rgba(128, 128, 128, 0.3)' : data.datasets[0].borderColor[index],
+                                        fontColor: hidden ? 'rgba(128, 128, 128, 0.5)' : undefined,
+                                        lineWidth: 1,
+                                        hidden: hidden,
+                                        index: index,
+                                        datasetIndex: 0
+                                    };
+                                });
+                            }
+                            return [];
                         }
                     }
                 },
